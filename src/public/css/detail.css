@@ -1,0 +1,72 @@
+.wrapper {
+    background-color: #F0EFF2;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 70px 0;
+}
+
+.page-title {
+    font-size: 36px;
+    font-weight: bold;
+    border-left: 5px solid black;
+    padding-left: 20px;
+}
+
+.attendance-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    color: gray;
+}
+
+.attendance-detail-row {
+    padding: 15px 0;
+    height: 100px;
+    border-bottom: 1px solid #F0EFF2;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: left;
+}
+
+.attendance-detail-th {
+    width: 40%;
+    padding: 15px 0px 15px 100px;
+    font-size: 18px;
+}
+
+.attendance-detail-td {
+    width: 60%;
+    padding: 15px 0;
+    color :black;
+}
+
+.time-separator {
+    margin: 0 20px;
+
+    color: gray;
+}
+
+.punch-time-input, .rest-time-input {
+    width: 150px;
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.remarks-input {
+    width: 370px;
+    height: 70px;
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}

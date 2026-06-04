@@ -1,0 +1,88 @@
+.wrapper {
+    background-color: #F0EFF2;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 70px 0;
+}
+
+.page-title {
+    font-size: 36px;
+    font-weight: bold;
+    border-left: 5px solid black;
+    padding-left: 20px;
+}
+
+.monthly-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    background-color: white;
+    padding: 5px 20px;
+    border-radius: 10px;
+    height: 70px;
+}
+
+.calendar-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 5px;
+    margin-bottom: 10px;
+}
+
+.monthly-text {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.monthly-display .monthly-link {
+    color:gray;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    color: gray;
+    text-align: center;
+}
+
+.attendance-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.attendance-table-header {
+    border-bottom: 3px solid gray;
+}
+
+.attendance-table-th {
+    padding: 15px 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.attendance-table-row {
+    border-bottom: 1px solid gray;
+}
+
+.attendance-table-td {
+    padding: 15px 0;
+    font-size: 16px;
+}
+
+.detail-link {
+    color: black;
+    font-weight: bold;
+    font-size: 16px;
+}

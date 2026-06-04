@@ -1,0 +1,69 @@
+.container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+}
+
+.status {
+    padding: 7px 15px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 16px;
+    background-color: rgb(200, 200, 200);
+    margin-bottom: 20px;
+}
+
+.date {
+    font-size: 30px;
+    margin-bottom: 20px;
+}
+
+.time {
+    font-size: 80px;
+    font-weight: bold;
+    margin-bottom: 60px;
+}
+
+.btn {
+    padding: 15px 60px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 10px;
+}
+
+.btn-main {
+    background-color: black;
+    color: white;
+}
+
+.btn-sub {
+    background-color: white;
+    color: black;
+}
+
+.messages {
+    height: 50px;
+    margin-bottom: 20px;
+}
+
+.alert-success {
+    color: white;
+    background-color: rgb(54, 162, 235);
+    padding: 10px 20px;
+    border-radius: 50px;
+}
+
+.alert-error {
+    color: white;
+    background-color: rgb(255, 99, 132);
+    padding: 10px 20px;
+    border-radius: 50px;
+}
+
+.status-message {
+    font-size: 32px;
+    font-weight: bold;
+}
