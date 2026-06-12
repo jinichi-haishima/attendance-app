@@ -17,6 +17,9 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\LogoutResponse;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
 
@@ -70,6 +73,39 @@ class FortifyServiceProvider extends ServiceProvider
         throw ValidationException::withMessages([
             Fortify::username() => 'ログイン情報が登録されていません',
         ]);
+    });
+
+        $this->app->singleton(LoginResponse::class, function ($request) {
+        return new class implements LoginResponse {
+            public function toResponse($request)
+            {
+               // 💡 ログインしたユーザー情報を取得
+                $user = Auth::user();
+
+                // 💡 ユーザーが存在し、かつ管理者（is_admin が 1 または true）の場合
+                if ($user && $user->is_admin) { 
+                    return redirect()->route('admin.index'); // 管理者一覧ページへ
+                }
+
+                // 一般ユーザー、または権限がない場合は通常画面へ
+                return redirect(config('fortify.home'));
+            }
+        };
+    });
+    
+        $this->app->singleton(LogoutResponse::class, function ($request) {
+        return new class implements LogoutResponse {
+            public function toResponse($request)
+            {
+                // 💡 ログアウトする直前のURLに 'admin' が含まれていた場合
+                if ($request->is('admin*') || str_contains(url()->previous(), '/admin')) {
+                    return redirect()->route('admin.login'); // 管理者ログイン画面へ
+                }
+
+                // 一般ユーザーは通常のログイン画面へ
+                return redirect()->route('login');
+            }
+        };
     });
 
     RateLimiter::for('login', function (Request $request) {

@@ -4,21 +4,46 @@
             <img src="{{ asset('images/logo.png') }}" alt="ロゴ" class="logo">
         </div>
         <ul class="nav-list-group">
-            <li class="nav-list-item">勤怠</li>
-            <li class="nav-list-item">勤怠一覧</li>
-            <li class="nav-list-item">申請</li>
-            <li class="nav-list-item"><a href="{{ route('register') }}">ユーザー登録</a></li>
+            @can('admin-only')
+                <li class="nav-list-item">
+                    <a href="{{ route('admin.index') }}" class="nav-link">勤怠一覧（管理者）</a>
+                </li>
+                <li class="nav-list-item">
+                    <a href="{{ route('admin.staff.list') }}" class="nav-link">スタッフ一覧</a>
+                </li>
+                <li class="nav-list-item">
+                    <a href="{{ route('attendance-requests.index') }}" class="nav-link">申請履歴</a>
+                </li>
+                <li class="nav-list-item">レポート</li>
+            @else
+                <li class="nav-list-item">
+                    <a href="{{ route('attendance.index') }}" class="nav-link">勤怠</a>
+                </li>
+                <li class="nav-list-item">
+                    <a href="{{ route('attendance-records.index') }}" class="nav-link">今月の出勤一覧</a>
+                </li>
+                <li class="nav-list-item">
+                    <a href="{{ route('attendance-records.index') }}" class="nav-link">勤怠一覧</a>
+                </li>
+                <li class="nav-list-item">
+                    <a href="{{ route('attendance-requests.index') }}" class="nav-link">申請履歴</a>
+                </li>
+            @endcan
             <li class="nav-list-item">
-                <a href="{{ route('attendance-records.index') }}">出勤一覧</a>
+                @can('admin-only')
+                    {{-- 管理者用ログアウトForm --}}
+                    <form action="{{ route('admin.logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="logout-button">ログアウト</button>
+                    </form>
+                @else
+                    {{-- 一般ユーザー用ログアウトForm --}}
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="logout-button">ログアウト</button>
+                    </form>
+                @endcan
             </li>
-            <li class="nav-list-item">申請一覧</li>
-            <li class="nav-list-item">レポート</li>
-            <li class="nav-list-item">
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" >
-                    @csrf
-                    <button type="submit" class="logout-button">ログアウト</button>
-                </form>
-            </a></li>
         </ul>
     </nav>
 </header>

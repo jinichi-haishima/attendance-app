@@ -15,12 +15,9 @@ class CreateRestRequestsTable extends Migration
     {
         Schema::create('rest_requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('attendance_request_id')->constrained()->onDelete('cascade');
             $table->dateTime('rest_in_time')->nullable();
             $table->dateTime('rest_out_time')->nullable();
-            $table->string('status')->default('pending'); // pending, approved, rejected
-            $table->text('reason')->nullable();
-            $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
     }

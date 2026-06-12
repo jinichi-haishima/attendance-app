@@ -10,28 +10,35 @@ class AttendanceRecord extends Model
 {
     use HasFactory;
 
-        protected $table = 'attendance_records';
+    protected $table = 'attendance_records';
 
-        protected $fillable = [
+    protected $casts = [
+            'punch_in_time'  => 'datetime',
+            'punch_out_time' => 'datetime',
+    ];
+
+    protected $fillable = [
             'user_id',
             'punch_in_time',
             'punch_out_time',
-        ];
+            'reason',
+    ];
 
-        public function rest_records()
-        {
-            return $this->hasMany(RestRecord::class, 'attendance_record_id');
-        }
+    public function rest_records()
+    {
+        return $this->hasMany(RestRecord::class, 'attendance_record_id');
+    }
 
-        public function user()
-        {
-            return $this->belongsTo(User::class);
-        }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-        public function getFormattedRestTimeAttribute()
-{
+    public function getFormattedRestTimeAttribute()
+    {
     // 総休憩分数（分）を計算
-    $totalMinutes = $this->rest_records->sum(function($rest) {
+    $totalMinutes = $this->rest_records->sum(function($rest) 
+    {
         if (!$rest->rest_in_time || !$rest->rest_out_time) return 0;
         return Carbon::parse($rest->rest_out_time)->diffInMinutes(Carbon::parse($rest->rest_in_time));
     });
@@ -40,12 +47,12 @@ class AttendanceRecord extends Model
     $hours = floor($totalMinutes / 60);
     $minutes = $totalMinutes % 60;
 
-    return sprintf('%2d:%02d', $hours, $minutes);
-}
+        return sprintf('%2d:%02d', $hours, $minutes);
+    }
 
     // 勤務時間から休憩時間を引いた実働時間を「H:i」にする
-public function getFormattedWorkTimeAttribute()
-{
+    public function getFormattedWorkTimeAttribute()
+    {
     if (!$this->punch_in_time || !$this->punch_out_time) {
         return '-';
     }
@@ -64,5 +71,5 @@ public function getFormattedWorkTimeAttribute()
     $minutes = $actualMinutes % 60;
 
     return sprintf('%2d:%02d', $hours, $minutes);
-}
+    }
 }

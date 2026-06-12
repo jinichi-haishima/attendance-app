@@ -9,13 +9,14 @@ class RestRequest extends Model
 {
     use HasFactory;
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    protected $fillable = [
+        'attendance_request_id',
+        'rest_in_time',
+        'rest_out_time', 
+    ];
 
-    public function approvedBy()
+    public function attendanceRequest()
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->belongsTo(AttendanceRequest::class);
     }
 }

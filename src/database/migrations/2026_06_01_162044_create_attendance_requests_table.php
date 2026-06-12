@@ -16,6 +16,7 @@ class CreateAttendanceRequestsTable extends Migration
         Schema::create('attendance_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('attendance_record_id')->constrained()->onDelete('cascade');
             $table->dateTime('punch_in_time')->nullable();
             $table->dateTime('punch_out_time')->nullable();
             $table->string('status')->default('pending'); // pending, approved, rejected

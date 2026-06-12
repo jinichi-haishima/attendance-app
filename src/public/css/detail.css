@@ -48,10 +48,13 @@
     color :black;
 }
 
+.date-year {
+    margin-right: 150px;
+}
+
 .time-separator {
     margin: 0 20px;
-
-    color: gray;
+    padding: 0 50px;
 }
 
 .punch-time-input, .rest-time-input {
@@ -62,11 +65,49 @@
     border-radius: 5px;
 }
 
-.remarks-input {
+.reason-input {
     width: 370px;
     height: 70px;
     padding: 5px;
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 40px;
+}
+
+.submit-button ,
+.approve-button {
+    display: inline-block;
+    padding: 10px 40px;
+    background-color: black;
+    color: white;
+    border-radius: 5px;
+}
+
+.disabled-button {
+    display: inline-block;
+    padding: 10px 40px;
+    background-color: #696969;
+    color: white;
+    border-radius: 5px;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.alert-warning {
+    color: red;
+}
+
+.alert-success {
+    color: green;
 }

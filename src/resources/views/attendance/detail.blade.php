@@ -4,13 +4,19 @@
     <link rel="stylesheet" href="{{ asset('css/detail.css') }}">
 @endsection
 
+@section('title', '勤怠詳細')
+
 @section('content')
 <div class="wrapper">
     <div class="container">
         <h1 class="page-title">勤怠詳細</h1>
-        <form method="POST" action="">
+        @if (session('success'))
+            <p class="alert alert-success">
+                {{ session('success') }}
+            </p>
+        @endif
+        <form method="POST" action="{{ route('attendance-records.store') }}" class="attendance-detail-form">
             @csrf
-            @method('PUT')
             <input type="hidden" name="record_id" value="{{ $record->id }}">
             <table class="attendance-detail-table">
                 <tr class="attendance-detail-row">
@@ -24,6 +30,7 @@
                         <span class="date-year">
                             {{ $record->punch_in_time ? \Carbon\Carbon::parse($record->punch_in_time)->format('Y年') : '' }}
                         </span>
+                        
                         <span class="date-month-day">
                             {{ $record->punch_in_time ? \Carbon\Carbon::parse($record->punch_in_time)->isoFormat('M月D日(ddd)') : '' }}
                         </span>
@@ -33,39 +40,98 @@
                 <tr class="attendance-detail-row">
                     <th class="attendance-detail-th">出勤・退勤</th>
                     <td class="attendance-detail-td flex-td">
-                        <input type="text" name="punch_in_time" class="punch-time-input" value="{{ $record->punch_in_time ? \Carbon\Carbon::parse($record->punch_in_time)->isoFormat('HH:mm') : '' }}">
-                        <span class="time-separator">〜</span>
-                        <input type="text" name="punch_out_time" class="punch-time-input" value="{{ $record->punch_out_time ? \Carbon\Carbon::parse($record->punch_out_time)->isoFormat('HH:mm') : '' }}">
+                        @if($latestRequest && ($latestRequest->status === '承認待ち' || $latestRequest->status === '承認済み'))
+                            {{-- 💡 承認待ちの時は、ただの文字（spanなど）で表示する --}}
+                            <span class="text-display">
+                                {{ $record->punch_in_time ? $record->punch_in_time->format('H:i') : '' }}
+                            </span>
+                            <span class="time-separator">〜</span>
+                            <span class="text-display">
+                                {{ $record->punch_out_time ? $record->punch_out_time->format('H:i') : '' }}
+                            </span>
+                        @else
+                            {{-- 通常時は、こないだ作ったインプット欄を表示する --}}
+                            <input type="text" name="punch_in_time" class="punch-time-input"
+                                value="{{ old('punch_in_time', $record->punch_in_time ? $record->punch_in_time->format('H:i') : '') }}">
+                            <span class="time-separator">〜</span>
+                            <input type="text" name="punch_out_time" class="punch-time-input"
+                                value="{{ old('punch_out_time', $record->punch_out_time ? $record->punch_out_time->format('H:i') : '') }}">
+                        @endif
                     </td>
                 </tr>
 
+                @foreach($record->rest_records as $rest)
                 <tr class="attendance-detail-row">
-                    <th class="attendance-detail-th">休憩</th>
+                    <th class="attendance-detail-th">休憩 {{ $loop->index + 1 }}</th>
                     <td class="attendance-detail-td flex-td">
-                        <input type="text" name="rest_in_time" class="rest-time-input" value="{{ $record->rest_in_time ? \Carbon\Carbon::parse($record->rest_in_time)->isoFormat('HH:mm') : '' }}">
+                        @if($latestRequest && ($latestRequest->status === '承認待ち' || $latestRequest->status === '承認済み'))
+                            {{-- 💡 承認待ち、承認済みの時は、ただの文字（spanなど）で表示する --}}
+                            <span class="text-display">
+                                {{ $rest->rest_in_time ? \Carbon\Carbon::parse($rest->rest_in_time)->format('H:i') : '' }}
+                            </span>
+                            <span class="time-separator">〜</span>
+                            <span class="text-display">
+                                {{ $rest->rest_out_time ? \Carbon\Carbon::parse($rest->rest_out_time)->format('H:i') : '' }}
+                            </span>
+                        @else
+                        <input type="hidden" name="rest_records[{{ $loop->index }}][id]" value="{{ $rest->id }}">
+                        
+                        <input type="text" name="rest_records[{{ $loop->index }}][rest_in_time]" class="rest-time-input" 
+                            value="{{ $rest->rest_in_time ? \Carbon\Carbon::parse($rest->rest_in_time)->isoFormat('HH:mm') : '' }}">
                         <span class="time-separator">〜</span>
-                        <input type="text" name="rest_out_time" class="rest-time-input" value="{{ $record->rest_out_time ? \Carbon\Carbon::parse($record->rest_out_time)->isoFormat('HH:mm') : '' }}">
-                    </td>
-                </tr>
+                        <input type="text" name="rest_records[{{ $loop->index }}][rest_out_time]" class="rest-time-input" 
+                            value="{{ $rest->rest_out_time ? \Carbon\Carbon::parse($rest->rest_out_time)->isoFormat('HH:mm') : '' }}">
+                        @endif
+                        @error('rest_time')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
 
-                <tr class="attendance-detail-row">
-                    <th class="attendance-detail-th">休憩２</th>
-                    <td class="attendance-detail-td flex-td">
-                        <input type="text" name="rest_in_time_2" class="rest-time-input" value="{{ $record->rest_in_time_2 ? \Carbon\Carbon::parse($record->rest_in_time_2)->isoFormat('HH:mm') : '' }}">
-                        <span class="time-separator">〜</span>
-                        <input type="text" name="rest_out_time_2" class="rest-time-input" value="{{ $record->rest_out_time_2 ? \Carbon\Carbon::parse($record->rest_out_time_2)->isoFormat('HH:mm') : '' }}">
+                        @error('rest_out_time_error')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
                     </td>
                 </tr>
+                @endforeach
+
+                {{-- 休憩の追加分は、承認待ち、承認済みの時は表示しない --}}
+                @if ($latestRequest->status !== '承認待ち' && $latestRequest->status !== '承認済み')
+                    <tr class="attendance-detail-row">
+                        <th class="attendance-detail-th">休憩{{ $record->rest_records->count() + 1 }}（追加分）</th>
+                        <td class="attendance-detail-td flex-td">
+                            <input type="text" name="rest_records[new][rest_in_time]" class="rest-time-input" value="" placeholder="00:00">
+                            <span class="time-separator">〜</span>
+                            <input type="text" name="rest_records[new][rest_out_time]" class="rest-time-input" value="" placeholder="00:00">
+                        </td>
+                    </tr>
+                @endif
 
                 <tr class="attendance-detail-row">
                     <th class="attendance-detail-th">備考</th>
-                    <td class="attendance-detail-td" colspan="2">
-                        <input type="text" name="remarks" class="remarks-input" value="{{ $record->remarks }}">
-                    </td>
+                    @if($latestRequest && ($latestRequest->status === '承認待ち' || $latestRequest->status === '承認済み'))
+                        {{-- 💡 承認待ち、承認済みの時は、ただの文字（spanなど）で表示する --}}
+                        <td class="attendance-detail-td" colspan="2">
+                            <span class="text-display">{{ $latestRequest->reason }}</span>
+                        </td>
+                    @else
+                        <td class="attendance-detail-td" colspan="2">
+                            <input type="text" name="reason" class="reason-input" value="{{ $record->reason }}" placeholder="修正理由を入力してください">
+                            @error('reason')
+                                <div class="error-message">{{ $message }}</div>
+                            @enderror
+                        </td>
+                    @endif
                 </tr>
             </table>
             <div class="button-container">
-                <button class="back-button">修正</button>
+                @if($latestRequest && $latestRequest->status === '承認待ち')
+                    <div class="alert-warning"> *承認待ちのため修正はできません。</div>
+                @elseif($latestRequest && $latestRequest->status === '承認済み')
+                    <div class="alert-approved"> 
+                        <button type="button" class="disabled-button" disabled>承認済み</button>
+                    </div>
+                @else
+                    <button type="submit" class="submit-button">修正</button>
+                @endif
             </div>
         </form>
     </div>

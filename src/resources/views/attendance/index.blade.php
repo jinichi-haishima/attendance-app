@@ -4,6 +4,8 @@
     <link rel="stylesheet" href="{{ asset('css/index.css') }}">
 @endsection
 
+@section('title', '勤怠一覧')
+
 @section('content')
 <div class="wrapper">
     <div class="container">
