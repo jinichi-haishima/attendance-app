@@ -42,7 +42,7 @@ class StaffController extends Controller
         }
         $startOfMonth = $currentMonth->copy()->startOfMonth();
         $endOfMonth = $currentMonth->copy()->endOfMonth();
-
+        // 指定された年月の勤怠記録を取得
         $attendanceRecords = AttendanceRecord::where('user_id', $user->id)
             ->whereBetween('punch_in_time',[$startOfMonth, $endOfMonth])
             ->with('rest_records')
@@ -50,7 +50,7 @@ class StaffController extends Controller
             ->keyBy(function($record) {
                 return Carbon::parse($record->punch_in_time)->format('Y-m-d');
             });
-
+            // カレンダー表示用のデータを作成
             $calendarDates = [];
             $daysInMonth = $currentMonth->daysInMonth;
 
@@ -73,5 +73,69 @@ class StaffController extends Controller
             'prevMonth' => $currentMonth->copy()->subMonth()->format('Y-m'),
             'nextMonth' => $currentMonth->copy()->addMonth()->format('Y-m'),
         ]);
+    }
+
+    public function downloadCsv(Request $request, $id)
+    {
+        /**
+     * 特定のスタッフの選択された月の勤怠データをCSV出力する
+     * URL: /admin/staff/{id}/csv
+     * @param Request $request リクエストオブジェクト（クエリパラメータ取得用）
+     * @param int $id スタッフのユーザーID
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse CSVファイルのストリームレスポンス
+     */ 
+        $user = User::findOrFail($id);
+
+        // 「選択された月」を取得
+        $dateInput = $request->query('date', now()->format('Y-m'));
+
+        try {
+            $currentMonth = Carbon::parse($dateInput . '-01');
+        } catch (\Exception $e) {
+            $currentMonth = Carbon::now()->startOfMonth();
+        }
+        $startOfMonth = $currentMonth->copy()->startOfMonth();
+        $endOfMonth = $currentMonth->copy()->endOfMonth();
+
+        // 💡 対象スタッフかつ指定年月の勤怠記録を取得（日付順）
+        $attendanceRecords = AttendanceRecord::where('user_id', $user->id)
+            ->whereBetween('punch_in_time', [$startOfMonth, $endOfMonth])
+            ->orderBy('punch_in_time', 'asc')
+            ->get();
+
+        // CSVストリームの生成
+        $response = new \Symfony\Component\HttpFoundation\StreamedResponse(function () use ($attendanceRecords, $user) {
+            $stream = fopen('php://output', 'w');
+            
+            // Excel文字化け防止用BOM
+            fwrite($stream, pack('C*', 0xEF, 0xBB, 0xBF));
+
+            // CSVのヘッダー（スタッフ個人の画面なので、行ごとに名前を入れるより先頭にあれば十分です）
+            fputcsv($stream, ['ユーザー名', $user->name]);
+            fputcsv($stream, []); // 1行空ける
+            fputcsv($stream, ['日付', '出勤時間', '退勤時間']);
+
+            // データの書き込み
+            foreach ($attendanceRecords as $record) {
+                $date = $record->punch_in_time ? Carbon::parse($record->punch_in_time)->format('Y-m-d') : '';
+                $punchIn = $record->punch_in_time ? Carbon::parse($record->punch_in_time)->format('H:i') : '';
+                $punchOut = $record->punch_out_time ? Carbon::parse($record->punch_out_time)->format('H:i') : '';
+
+                fputcsv($stream, [
+                    $date,
+                    $punchIn,
+                    $punchOut,
+                ]);
+            }
+            fclose($stream);
+        });
+
+        // ファイル名を「スタッフ名_年月.csv」にする（例: 山田太郎_2026-06.csv）
+        $fileName = $user->name . '_' . $currentMonth->format('Y-m') . '.csv';
+
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+
+        return $response;
     }
 }

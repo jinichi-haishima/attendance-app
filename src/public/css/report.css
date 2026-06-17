@@ -1,0 +1,55 @@
+.wrapper {
+    background-color: #FFFFFF;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.description {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.summary-list {
+    display: flex;
+    justify-content: space-between;
+}
+
+.summary-item {
+    background-color: #FAFAFA;
+    padding: 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    width: 30%;
+}
+
+.summary-title {
+    font-size: 16px;
+    color: gray;
+    margin-bottom: 10px;
+}
+
+.summary-value {
+    font-size: 24px;
+    margin-left: 0;
+}
+
+.monthly-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-weight: bold;
+}
+
+.monthly-table-header {
+    text-align: left;
+}
+
+.monthly-table tr{
+    border-bottom: 1px solid #E0E0E0;
+}
+

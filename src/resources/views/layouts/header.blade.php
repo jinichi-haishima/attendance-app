@@ -14,7 +14,7 @@
                 <li class="nav-list-item">
                     <a href="{{ route('attendance-requests.index') }}" class="nav-link">申請履歴</a>
                 </li>
-                <li class="nav-list-item">レポート</li>
+                
             @else
                 <li class="nav-list-item">
                     <a href="{{ route('attendance.index') }}" class="nav-link">勤怠</a>
@@ -26,7 +26,10 @@
                     <a href="{{ route('attendance-records.index') }}" class="nav-link">勤怠一覧</a>
                 </li>
                 <li class="nav-list-item">
-                    <a href="{{ route('attendance-requests.index') }}" class="nav-link">申請履歴</a>
+                    <a href="{{ route('attendance-requests.index') }}" class="nav-link">申請</a>
+                </li>
+                <li class="nav-list-item">
+                    <a href="{{ route('attendance.report') }}" class="nav-link">レポート</a>
                 </li>
             @endcan
             <li class="nav-list-item">

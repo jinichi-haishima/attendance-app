@@ -36,16 +36,17 @@ class AttendanceRecord extends Model
 
     public function getFormattedRestTimeAttribute()
     {
-    // 総休憩分数（分）を計算
-    $totalMinutes = $this->rest_records->sum(function($rest) 
-    {
-        if (!$rest->rest_in_time || !$rest->rest_out_time) return 0;
-        return Carbon::parse($rest->rest_out_time)->diffInMinutes(Carbon::parse($rest->rest_in_time));
-    });
+        // 総休憩分数（分）を計算
+        $totalMinutes = $this->rest_records->sum(function($rest) 
+        {
+            if (!$rest->rest_in_time || !$rest->rest_out_time) return 0;
+            
+            return Carbon::parse($rest->rest_out_time)->diffInMinutes(Carbon::parse($rest->rest_in_time));
+        });
 
-    // 時間と分に分解して「H:i」の形にする
-    $hours = floor($totalMinutes / 60);
-    $minutes = $totalMinutes % 60;
+        // 時間と分に分解して「H:i」の形にする
+        $hours = floor($totalMinutes / 60);
+        $minutes = $totalMinutes % 60;
 
         return sprintf('%2d:%02d', $hours, $minutes);
     }
@@ -53,23 +54,44 @@ class AttendanceRecord extends Model
     // 勤務時間から休憩時間を引いた実働時間を「H:i」にする
     public function getFormattedWorkTimeAttribute()
     {
-    if (!$this->punch_in_time || !$this->punch_out_time) {
-        return '-';
+        if (!$this->punch_in_time || !$this->punch_out_time) {
+            return '-';
+        }
+
+        //、$this->... から直接繋ぐ形に修正
+        $totalWorkMinutes = $this->punch_in_time->diffInMinutes($this->punch_out_time);
+
+        $totalRestMinutes = $this->rest_records->sum(function($rest) {
+            if (!$rest->rest_in_time || !$rest->rest_out_time) return 0;
+            return Carbon::parse($rest->rest_out_time)->diffInMinutes(Carbon::parse($rest->rest_in_time));
+        });
+
+        $actualMinutes = $totalWorkMinutes - $totalRestMinutes;
+        if ($actualMinutes < 0) $actualMinutes = 0;
+
+        $hours = floor($actualMinutes / 60);
+        $minutes = $actualMinutes % 60;
+
+        return sprintf('%2d:%02d', $hours, $minutes);
     }
 
-    $totalWorkMinutes = Carbon::parse($this->punch_in_time)->diffInMinutes(Carbon::parse($this->punch_out_time));
+    public function getActualWorkMinutesAttribute()
+    {
+        if (!$this->punch_in_time || !$this->punch_out_time) {
+            return 0; // 未打刻などは0分とする
+        }
 
-    $totalRestMinutes = $this->rest_records->sum(function($rest) {
-        if (!$rest->rest_in_time || !$rest->rest_out_time) return 0;
-        return Carbon::parse($rest->rest_out_time)->diffInMinutes(Carbon::parse($rest->rest_in_time));
-    });
+        // 1. 総勤務分数（こちらも 
+        $totalWorkMinutes = $this->punch_in_time->diffInMinutes($this->punch_out_time);
 
-    $actualMinutes = $totalWorkMinutes - $totalRestMinutes;
-    if ($actualMinutes < 0) $actualMinutes = 0;
+        // 2. 総休憩分数
+        $totalRestMinutes = $this->rest_records->sum(function ($rest) {
+            if (!$rest->rest_in_time || !$rest->rest_out_time) return 0;
+            return Carbon::parse($rest->rest_out_time)->diffInMinutes(Carbon::parse($rest->rest_in_time));
+        });
 
-    $hours = floor($actualMinutes / 60);
-    $minutes = $actualMinutes % 60;
-
-    return sprintf('%2d:%02d', $hours, $minutes);
+        $actualMinutes = $totalWorkMinutes - $totalRestMinutes;
+        
+        return $actualMinutes < 0 ? 0 : $actualMinutes;
     }
 }

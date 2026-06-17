@@ -47,7 +47,11 @@ class FortifyServiceProvider extends ServiceProvider
             return view('auth.login');
         });
 
-    Fortify::authenticateUsing(function ($request) {
+        Fortify::verifyEmailView(function() {
+            return view('auth.verify-email');
+        });
+
+        Fortify::authenticateUsing(function ($request) {
 
         // 1. URLによって、実行するFormRequest（未入力バリデーション）を切り替える
         if ($request->is('admin*')) {

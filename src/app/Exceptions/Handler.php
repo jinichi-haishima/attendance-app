@@ -37,5 +37,27 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+
+        // 💡 引数を「Throwable $e」という一番安全な形にして、500エラーを絶対に防ぐ
+        $this->renderable(function (Throwable $e, $request) {
+            if ($request->is('api/*')) {
+                
+                // 🔒 1. 認可エラー（403）の翻訳ルール
+                if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                    return response()->json([
+                        'error' => 'この操作を実行する権限がありません。'
+                    ], 403);
+                }
+
+                // 🔍 2. データなしエラー（404）の翻訳ルール
+                if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException || 
+                    $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+                    return response()->json([
+                        'error' => '指定されたデータが見つかりません。'
+                    ], 404);
+                }
+            }
+        });
     }
 }
+
