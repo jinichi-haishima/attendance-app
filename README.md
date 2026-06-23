@@ -4,7 +4,7 @@
 
 1. リポジトリをクローンする
 ```bash
-git clone <リポジトリのURL>
+git clone git@github.com:jinichi-haishima/attendance-app.git
 cd <プロジェクトのディレクトリ名>
 ```
 2. プロジェクト直下で、以下のコマンドを実行する
@@ -102,7 +102,7 @@ MAIL_FROM_ADDRESSは任意のメールアドレスを入力してください。
 | カラム名 | 型 | primary key | unique key | not null | foreign key | 備考 |
 | --- | --- | :---: | :---: | :---: | :---: | --- |
 | id | bigint unsigned | ◯ |  | ◯ |  | 自動採番ID |
-| attendance_request_id | bigint unsigned |  |  | ◯ | attendance_requests(id) | 親修正申請ID（親削除時連動消去） |
+| attendance_request_id | bigint unsigned |  |  | ◯ | attendance_requests(id) | 勤怠に紐づく申請ID|
 | rest_in_time | datetime |  |  |  |  | 変更希望の休憩入り日時（空を許容） |
 | rest_out_time | datetime |  |  |  |  | 変更希望の休憩戻り日時（空を許容） |
 | created_at | timestamp |  |  |  |  | レコード作成日時 |
