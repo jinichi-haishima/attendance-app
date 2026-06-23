@@ -14,6 +14,8 @@ use Carbon\Carbon;
 
 class AttendanceRecordController extends Controller
 {   
+
+    public function index(Request $request)
     /**
      * 勤怠記録の一覧表示
      * URL例: /attendance-records?date=2026-06
@@ -25,7 +27,6 @@ class AttendanceRecordController extends Controller
      * @param Request $request リクエストオブジェクト（クエリパラメータ取得用）
      * @return \Illuminate\View\View 勤怠一覧画面のビュー
      */
-    public function index(Request $request)
     {
     $user = Auth::user();
     $dateInput = $request->query('date', Carbon::now()->format('Y-m'));
@@ -59,17 +60,17 @@ class AttendanceRecordController extends Controller
 
         // その日の打刻データがあるか、先ほどの連想配列から探す
         $dateString = $date->format('Y-m-d');
-        $record = $attendanceRecords->get($dateString); // なければ null が入る
+        $record = $attendanceRecords->get($dateString); 
 
         // 日付情報と打刻データをセットにして配列に入れる
         $calendarDates[] = [
-            'date' => $date,       // Carbonオブジェクト（曜日や日付の表示用）
-            'record' => $record    // 打刻データ（なければnull）
+            'date' => $date,       
+            'record' => $record 
         ];
     }
 
     return view('attendance.index', [
-        'calendarDates' => $calendarDates, // 💡 これをビューに渡す
+        'calendarDates' => $calendarDates,
         'displayMonth'  => $currentMonth->format('Y年m月'),
         'prevMonth'     => $currentMonth->copy()->subMonth()->format('Y-m'),
         'nextMonth'     => $currentMonth->copy()->addMonth()->format('Y-m'),
@@ -78,49 +79,47 @@ class AttendanceRecordController extends Controller
 
     public function detail(Request $request)
     {
-        /** */
         $user = Auth::user();
-        $requestId = $request->query('id');
+        $attendanceRecordId = $request->query('id');
 
-        if (!$requestId) {
-            return redirect()->route('attendance-records.index')->with('error', '日付が指定されていません。');
+        if (!$attendanceRecordId) {
+            return redirect()->route('attendance-records.index')->with('error', '勤怠データが指定されていません。');
         }
 
-        // 1. 申請IDから、ピンポイントで対象の申請データを取得する（userやrest_requestsも一緒にロード）
-    $latestRequest = AttendanceRequest::where('id', $requestId)
-        ->where('user_id', $user->id) // 他人の申請を見られないように安全ガード
-        ->with('rest_requests')
-        ->first();
+        $record = AttendanceRecord::find($attendanceRecordId);
 
-    if (!$latestRequest) {
-        return redirect()->route('attendance-records.index')->with('error', '指定された申請記録が見つかりませんでした。');
-    }
+        if (!$record || $record->user_id !== $user->id) {
+            return redirect()->route('attendance-records.index')->with('error', '勤怠記録が見つかりませんでした。');
+        }
 
-    // 2. その申請に紐づいている本番の勤怠レコードを取得する
-    $record = AttendanceRecord::find($latestRequest->attendance_record_id);
+        // この勤怠レコードに紐づく「承認待ち」の申請がないか探す
+        $latestRequest = AttendanceRequest::where('attendance_record_id', $record->id)
+            ->whereIn('status', ['pending', 'approved']) // 承認待ちおよび承認済みの申請を対象
+            ->latest()
+            ->first();
 
-    if (!$record) {
-        return redirect()->route('attendance-records.index')->with('error', '勤怠記録が見つかりませんでした。');
-    }
+        // 申請（承認待ち）がある場合は、その内容を優先表示する。ない場合は、元の勤怠データを表示する。
+        if ($latestRequest) {
+            $record->rest_records = $latestRequest->rest_requests; 
 
-    // 3. もしステータスが「承認待ち」なら、画面表示用に申請中のデータで上書きする
-    // ※アクセサにより getStatusAttribute が '承認待ち' を返すため、日本語で判定します
-    if ($latestRequest->status === '承認待ち') {
-        $record->rest_records = $latestRequest->rest_requests; 
-        $record->punch_in_time = $latestRequest->punch_in_time; 
-        $record->punch_out_time = $latestRequest->punch_out_time;
-    }
+            $record->punch_in_time = $latestRequest->punch_in_time ? $latestRequest->punch_in_time : null; 
+            $record->punch_out_time = $latestRequest->punch_out_time ? $latestRequest->punch_out_time: null;
+        } else {
+            $record->punch_in_time = $record->punch_in_time ? $record->punch_in_time : null;
+            $record->punch_out_time = $record->punch_out_time ? $record->punch_out_time : null;
+            $record->rest_records = $record->rest_records ?? collect();
+        }
 
-    // 表示用の日付（申請された日、または元の勤怠の日付）
-    $displayDate = $latestRequest->punch_in_time 
-        ? \Carbon\Carbon::parse($latestRequest->punch_in_time)->format('Y年m月d日')
-        : \Carbon\Carbon::parse($record->punch_in_time)->format('Y年m月d日');
+        // 表示用の日付
+        $displayDate = $record->punch_in_time 
+            ? $record->punch_in_time->format('Y年m月d日')
+            : now()->format('Y年m月d日');
 
-    return view('attendance.detail', [
-        'record' => $record,
-        'displayDate' => $displayDate,
-        'latestRequest' => $latestRequest,
-    ]);
+        return view('attendance.detail', [
+            'record' => $record,
+            'displayDate' => $displayDate,
+            'latestRequest' => $latestRequest,
+        ]);
     }
 
     public function store(CorrectionRequest $request)

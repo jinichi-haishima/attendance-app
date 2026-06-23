@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Carbon\Carbon;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -50,5 +51,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function attendanceRequests()
     {
         return $this->hasMany(AttendanceRequest::class);
+    }
+
+    // 今日すでに退勤しているかどうかを判定するメソッド
+    public function hasPunchedOutToday()
+    {
+        $today = Carbon::today();
+
+        return $this->attendanceRecords()
+            ->whereDate('punch_in_time', $today)
+            ->whereNotNull('punch_out_time')
+            ->exists();
     }
 }

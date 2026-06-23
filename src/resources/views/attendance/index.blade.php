@@ -50,7 +50,7 @@
                             {{ $item['record']->formatted_work_time }}
                         </td>
                         <td class="attendance-table-td">
-                            <a href="{{ route('attendance-records.detail', ['date' => $item['date']->format('Y-m-d')]) }}" class="detail-link">詳細</a>
+                            <a href="{{ route('attendance-records.detail', ['id' => $item['record']->id]) }}" class="detail-link">詳細</a>
                         </td>
                         @else
                         <td class="attendance-table-td"></td>

@@ -57,6 +57,12 @@
                             <input type="text" name="punch_out_time" class="punch-time-input"
                                 value="{{ old('punch_out_time', $record->punch_out_time ? $record->punch_out_time->format('H:i') : '') }}">
                         @endif
+                        @error('punch_in_time')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                        @error('punch_out_time')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
                     </td>
                 </tr>
 
@@ -94,7 +100,7 @@
                 @endforeach
 
                 {{-- 休憩の追加分は、承認待ち、承認済みの時は表示しない --}}
-                @if ($latestRequest->status !== '承認待ち' && $latestRequest->status !== '承認済み')
+                @if ($latestRequest?->status !== '承認待ち' && $latestRequest?->status !== '承認済み')
                     <tr class="attendance-detail-row">
                         <th class="attendance-detail-th">休憩{{ $record->rest_records->count() + 1 }}（追加分）</th>
                         <td class="attendance-detail-td flex-td">

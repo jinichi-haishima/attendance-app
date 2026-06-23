@@ -93,7 +93,7 @@ class AdminController extends Controller
         $restRecords = $request->input('rest_records', []);
         $reason = $request->input('reason'); // 画面の備考欄を「申請理由」として扱う
 
-        // 1. 元になる本番の勤怠記録が存在するか一応チェック
+        //  元になる本番の勤怠記録が存在するか一応チェック
     $record = AttendanceRecord::find($recordId);
     if (!$record) {
         return redirect()->route('admin.index')->with('error', '勤怠記録が見つかりませんでした。');
@@ -101,26 +101,23 @@ class AdminController extends Controller
 
     $targetDate = $record->punch_in_time ? Carbon::parse($record->punch_in_time)->format('Y-m-d') : Carbon::now()->format('Y-m-d');
 
-        // ★安全のためにトランザクションを開始（親か子のどちらかでエラーが起きたら全部白紙に戻す）
+        // 安全のためにトランザクションを開始（親か子のどちらかでエラーが起きたら全部白紙に戻す）
         DB::transaction(function () use ($record, $punchInTime, $punchOutTime, $reason, $restRecords, $targetDate) {
         
-        // 2. 本番の勤怠レコード（AttendanceRecord）を直接更新
+        // 本番の勤怠レコード（AttendanceRecord）を直接更新
         $record->update([
             'punch_in_time' => $punchInTime ? Carbon::parse($targetDate . ' ' . $punchInTime) : null,
             'punch_out_time' => $punchOutTime ? Carbon::parse($targetDate . ' ' . $punchOutTime) : null,
             'reason' => $reason,   // 修正理由をここに1つだけ保存！
         ]);
 
-        // データの整合性を保つため、一度この勤怠に紐づく休憩をリセット（削除）する
         $record->rest_records()->delete();
 
-        // 3. 子テーブル（rest_requests）に休憩の申請データを保存していく
         foreach ($restRecords as $restData) {
             // 開始時間と終了時間の両方が入力されている場合のみ申請を受け付ける
             if (!empty($restData['rest_in_time']) && !empty($restData['rest_out_time'])) {
                 
                 $record->rest_records()->create([
-                    // ★ここが超重要！先ほど採番された「親の申請ID」をセットして親子関係を作る
                     'rest_in_time' => Carbon::parse($targetDate . ' ' . $restData['rest_in_time']),
                     'rest_out_time' => Carbon::parse($targetDate . ' ' . $restData['rest_out_time']),
                 ]);

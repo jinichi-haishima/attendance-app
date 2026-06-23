@@ -3,164 +3,139 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\AttendanceRecordResource;
+use App\Http\Resources\Api\V1\AttendanceRecordResource;
+use App\Http\Resources\Api\V1\AttendanceRecordDetailResource;
 use App\Models\AttendanceRecord;
 use Illuminate\Http\Request;
 use App\Http\Requests\Api\V1\IndexAttendanceRecordRequest;
 use App\Http\Requests\Api\V1\StoreAttendanceRecordRequest;
 use App\Http\Requests\Api\V1\UpdateAttendanceRecordRequest;
-use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
 
 class AttendanceRecordController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * 勤怠レコードのAPIエンドポイント
+     * URL例: /api/v1/attendance-records?user_id=1&date=2023-08-01&month=2023-08&per_page=20
+     * @param \Illuminate\Http\Request $request リクエストオブジェクト
+     * @return \Illuminate\Http\Response 指定された条件に基づく勤怠レコードの一覧を返す
      */
     public function index(IndexAttendanceRecordRequest $request)
     {
-        /**
-         * 勤怠レコードのAPIエンドポイント
-         * URL: /api/v1/attendance-records
-         * クエリパラメータで「date=YYYY-MM」を受け取り、その年月の勤怠レコードを返す
-         * クエリパラメータがない場合は、現在の年月の勤怠レコードを返す
-         */
+        $query = AttendanceRecord::with(['user', 'rest_records'])
+            ->latest('punch_in_time');
 
-        $query = AttendanceRecord::query();
+        $query->when($request->input('user_id'), function ($q, $userId) {
+            return $q->where('user_id', $userId);
+        });
 
-        if($request->has('user_id')) {
-            $query->where('user_id', $request->input('user_id'));
+        $query->when($request->input('date'), function ($q, $date) {
+            return $q->whereDate('punch_in_time', $date);
+        });
+
+        $query->when($request->input('month'), function ($q, $monthString) {
+            $parts = explode('-', $monthString);
+            if (count($parts) === 2) {
+                return $q->whereYear('punch_in_time', $parts[0])
+                        ->whereMonth('punch_in_time', $parts[1]);
+            }
+        });
+
+        //パラメータが何もない場合は、今月分にするフォールバック（必要に応じて）
+        if (!$request->hasAny(['user_id', 'date', 'month'])) {
+            $query->whereYear('punch_in_time', now()->year)
+                ->whereMonth('punch_in_time', now()->month);
         }
-        if($request->has('date')) {
-            $query->where('date', $request->input('date'));
-        }
 
-        if($request->has('month')) {
-            $month = $request->input('month');
-            $query->where('date', 'like', $month . '%');
-        }
-
+        // per_page の最大値はバリデーション側で保証されている。
         $perPage = $request->input('per_page', 20);
-        if ($perPage > 100) {
-            $perPage = 100;
-        }elseif ($perPage < 1) {
-            $perPage = 20;
-        }  
-
         $records = $query->paginate($perPage);
 
         return AttendanceRecordResource::collection($records);
     }
+    
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * 勤怠レコードのAPIエンドポイント
+     * URL例: /api/v1/attendance-records
+      * @param \Illuminate\Http\Request $request リクエストオブジェクト
+     * @return \Illuminate\Http\Response 新しく作成された勤怠レコードの詳細を返す
      */
     public function store(StoreAttendanceRecordRequest $request)
     {
         $validated = $request->validated();
         $date = $validated['date'];
 
+        // 💡 送られてきた日付と時刻を結合
         $punchInTime = "{$date} {$validated['clock_in']}";
-        $punchOutTime = !empty($validated['clock_out'])?"{$date} {$validated['clock_out']}" : null;
+        $punchOutTime = !empty($validated['clock_out']) ? "{$date} {$validated['clock_out']}" : null;
 
-        $record = AttendanceRecord::create([
-            'user_id' => $validated['user_id'],
-            'punch_in_time' => $punchInTime,
+        $attendanceRecord = $request->user()->attendanceRecords()->create([
+            'punch_in_time'  => $punchInTime,
             'punch_out_time' => $punchOutTime,
-            'reason' => $validated['comment'] ?? null,
+            'reason'         => $validated['comment'] ?? null,
         ]);
 
-        return (new AttendanceRecordResource($record))
+        // 💡 関連データを eager load
+        $attendanceRecord->load(['user', 'rest_records']);
+
+        // 💡 201 Created で返却
+        return (new AttendanceRecordResource($attendanceRecord))
             ->response()
             ->setStatusCode(201);
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * 勤怠詳細取得 (GET)
+     * * GET /api/v1/attendance-records/{attendanceRecord}
      */
-    public function show($id)
+    public function show(AttendanceRecord $attendanceRecord)
     {
-        /**
-         * 勤怠レコードのAPIエンドポイント
-         * URL例: /api/v1/attendance-records/1
-         * @param int $id 勤怠レコードのID
-         * @return \Illuminate\Http\Response 指定された勤怠レコードの詳細を返す
-         */
+        // 💡 Eager Load で関連データを取得
+        $attendanceRecord->load(['user', 'rest_records', 'applications']);
 
-        $record = AttendanceRecord::with('user', 'rest_records')->findOrFail($id);
-
-        if(!$record) {
-            return response()->json([
-                'error' => '勤怠情報が見つかりませんでした。'
-            ], 404);
-        }
-        return new AttendanceRecordResource($record);
+        // 共用化されたリソースを返却
+        return new AttendanceRecordResource($attendanceRecord);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(UpdateAttendanceRecordRequest $request,AttendanceRecord $attendanceRecord)
     {
-
         // 🔒 認可チェックを実行（現在のログインユーザーが、このデータを編集できるか）
-        Gate::authorize('update', $attendanceRecord);
-        /**
-         * 勤怠レコードのAPIエンドポイント
-         * URL例: /api/v1/attendance-records/1
-         * @param int $id 勤怠レコードのID
-         * クエリパラメータで「date=YYYY-MM-DD」を受け取り、その日付の勤怠レコードを更新する
-         * クエリパラメータがない場合は、勤怠レコードのdateを更新しない
-         */
-        $record = $attendanceRecord;
+        $this->authorize('update', $attendanceRecord);
 
         $validated = $request->validated();
         $date = $validated['date'];
 
+        // 💡 登録時と同様に、日時型に合わせて結合
         $punchInTime = "{$date} {$validated['clock_in']}";
-        $punchOutTime = !empty($validated['clock_out'])?"{$date} {$validated['clock_out']}" : null;
+        $punchOutTime = !empty($validated['clock_out']) ? "{$date} {$validated['clock_out']}" : null;
 
-        $record->update([
-            'user_id' => $validated['user_id'],
-            'punch_in_time' => $punchInTime,
+        // 💡 補足の指示通り、レコードを更新
+        $attendanceRecord->update([
+            'punch_in_time'  => $punchInTime,
             'punch_out_time' => $punchOutTime,
-            'reason' => $validated['comment'] ?? null,
+            'reason'         => $validated['comment'] ?? null,
         ]);
 
-        return new AttendanceRecordResource($record);
+        // 💡 補足の指示通り、更新後に eager load
+        $attendanceRecord->load(['user', 'rest_records']);
+
+        // 💡 200 OK で AttendanceRecordResource を返す（通常のリターンでOK）
+        return new AttendanceRecordResource($attendanceRecord);
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * 指定された勤怠レコードを削除する
+     * * DELETE /api/v1/attendance-records/{attendanceRecord}
      */
     public function destroy(AttendanceRecord $attendanceRecord)
     {
         // 🔒 認可チェックを実行（現在のログインユーザーが、このデータを削除できるか）
-        Gate::authorize('delete', $attendanceRecord);
-        /**
-         * 勤怠レコードのAPIエンドポイント
-         * URL例: /api/v1/attendance-records/1
-         * @param int $id 勤怠レコードのID
-         * 指定された勤怠レコードを削除する
-         */
-        $record = $attendanceRecord;
+        $this->authorize('delete', [$attendanceRecord, 'この操作を実行する権限がありません。']);
 
-        $record->delete();
+        // 💡 レコードを削除
+        $attendanceRecord->delete();
 
+        // ⭕ 204 No Content を返却
         return response()->noContent();
     }
 }

@@ -51,16 +51,21 @@ class AttendanceRecordPolicy
      * @param  \App\Models\AttendanceRecord  $attendanceRecord
      * @return \Illuminate\Auth\Access\Response|bool
      */
+    public function before(User $user, string $ability)
+    {
+        if ($user->is_admin) {
+            return true; // 👑 管理者なら何でも一発許可！
+        }
+    }
+
     public function update(User $user, AttendanceRecord $attendanceRecord)
     {
-        // ⭕ 自分の勤怠レコードか、管理者権限を持つユーザーのみ更新可能
-        return $user->id === $attendanceRecord->user_id || $user->is_admin;
+        return $user->id === $attendanceRecord->user_id; 
     }
 
     public function delete(User $user, AttendanceRecord $attendanceRecord)
     {
-        // ⭕ 同上
-        return $user->id === $attendanceRecord->user_id || $user->is_admin;
+        return $user->id === $attendanceRecord->user_id; 
     }
 
     /**

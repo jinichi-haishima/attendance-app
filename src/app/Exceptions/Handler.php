@@ -53,7 +53,7 @@ class Handler extends ExceptionHandler
                 if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException || 
                     $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
                     return response()->json([
-                        'error' => '指定されたデータが見つかりません。'
+                        'error' => '勤怠情報が見つかりませんでした。'
                     ], 404);
                 }
             }

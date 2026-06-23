@@ -34,6 +34,11 @@ class AttendanceRecord extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function applications()
+    {
+        return $this->hasMany(AttendanceRequest::class, 'attendance_record_id');
+    }
+
     public function getFormattedRestTimeAttribute()
     {
         // 総休憩分数（分）を計算
