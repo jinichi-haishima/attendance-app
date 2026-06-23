@@ -64,6 +64,9 @@
                     @endforeach
                 </tbody>
             </table>
+            <div class="button-container">
+                <a href="{{ route('admin.staff.csv', $user->id) }}?date={{ request()->query('date', now()->format('Y-m')) }}" class="csv-button">CSV出力</a>
+            </div>
         </div>
     </div>
 </div>

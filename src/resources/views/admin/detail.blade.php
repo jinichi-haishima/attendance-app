@@ -57,6 +57,12 @@
                             <input type="text" name="punch_out_time" class="punch-time-input"
                                 value="{{ old('punch_out_time', $attendanceRecord->punch_out_time ? \Carbon\Carbon::parse($attendanceRecord->punch_out_time)->format('H:i') : '') }}">
                         @endif
+                        @error('punch_in_time')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                        @error('punch_out_time')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
                     </td>
                 </tr>
 
@@ -101,6 +107,12 @@
                             <input type="text" name="rest_records[new][rest_in_time]" class="rest-time-input" value="" placeholder="00:00">
                             <span class="time-separator">〜</span>
                             <input type="text" name="rest_records[new][rest_out_time]" class="rest-time-input" value="" placeholder="00:00">
+                            @error('rest_time')
+                                <div class="error-message">{{ $message }}</div>
+                            @enderror
+                            @error('rest_out_time_error')
+                                <div class="error-message">{{ $message }}</div>
+                            @enderror
                         </td>
                     </tr>
                 @endif

@@ -15,6 +15,11 @@ class RestRecord extends Model
         'rest_out_time',
     ];
 
+    protected $casts = [
+    'rest_in_time'  => 'datetime',
+    'rest_out_time' => 'datetime',
+    ];
+
     public function attendanceRecord()
     {
         return $this->belongsTo(AttendanceRecord::class, 'attendance_record_id');
