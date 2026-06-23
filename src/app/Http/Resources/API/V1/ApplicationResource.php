@@ -17,10 +17,10 @@ class ApplicationResource extends JsonResource
         return [
             // 仕様書の指定キー => マイグレーションのカラム名
             'id'             => $this->id,
-            'status'         => $this->status, 
-            'punch_in_time'  => $this->punch_in_time,  
-            'punch_out_time' => $this->punch_out_time, 
-            'comment'        => $this->reason,         // ⭕ 仕様書は comment、DBは reason で綺麗にマッピング！
+            'status'         => $this->status,
+            'punch_in_time'  => $this->punch_in_time,
+            'punch_out_time' => $this->punch_out_time,
+            'comment'        => $this->reason,
             'created_at'     => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
         ];
     }

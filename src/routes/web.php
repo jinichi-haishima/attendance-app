@@ -40,7 +40,7 @@ Route::prefix('admin')->group(function () {
 Route::middleware(['auth', 'verified','can:admin-only'])->prefix('admin')->group(function () {
 
 // --- 👨‍💼 管理者用の画面ルート ---
-    Route::post('/admin/logout', [Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::class, 'destroy'])->name('admin.logout');
+    Route::post('/logout', [Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::class, 'destroy'])->name('admin.logout');
     Route::get('attendance/list', [AdminController::class, 'index'])->name('admin.index');
     Route::get('attendance', [AdminController::class, 'detail'])->name('admin.detail');
     Route::post('attendance/update', [AdminController::class, 'update'])->name('admin.attendance.update');

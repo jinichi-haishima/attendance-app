@@ -19,19 +19,14 @@ class AttendanceRecordResource extends JsonResource
             'id'               => $this->id,
             'user_id'          => $this->user_id,
             'user'             => new UserResource($this->whenLoaded('user')),
-            
             'date'             => $this->punch_in_time ? $this->punch_in_time->format('Y-m-d') : null,
             'clock_in'         => $this->punch_in_time ? $this->punch_in_time->format('H:i:s') : null,
             'clock_out'        => $this->punch_out_time ? $this->punch_out_time->format('H:i:s') : null,
-            
             'total_time'       => $this->formatted_work_time,
             'total_break_time' => $this->formatted_rest_time,
             'comment'          => $this->reason,
-            
-            // ⭕ キー名は仕様書通りの「breaks」にしつつ、データ元は「rest_records」を呼び出す！
             'breaks'           => AttendanceBreakResource::collection($this->whenLoaded('rest_records')),
             'applications'     => ApplicationResource::collection($this->whenLoaded('applications')),
-            
         ];
     }
 }
