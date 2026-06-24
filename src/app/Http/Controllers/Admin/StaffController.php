@@ -63,9 +63,9 @@ class StaffController extends Controller
                     'date' => $date,
                     'attendance' => $record
                 ];
-                
+
             }
-        
+
         return view('admin.staff_attendance', [
             'user' => $user,
             'calendarDates' => $calendarDates,
@@ -83,7 +83,7 @@ class StaffController extends Controller
      * @param Request $request リクエストオブジェクト（クエリパラメータ取得用）
      * @param int $id スタッフのユーザーID
      * @return \Symfony\Component\HttpFoundation\StreamedResponse CSVファイルのストリームレスポンス
-     */ 
+     */
         $user = User::findOrFail($id);
 
         // 「選択された月」を取得
@@ -106,25 +106,31 @@ class StaffController extends Controller
         // CSVストリームの生成
         $response = new \Symfony\Component\HttpFoundation\StreamedResponse(function () use ($attendanceRecords, $user) {
             $stream = fopen('php://output', 'w');
-            
+
             // Excel文字化け防止用BOM
             fwrite($stream, pack('C*', 0xEF, 0xBB, 0xBF));
 
-            // CSVのヘッダー（スタッフ個人の画面なので、行ごとに名前を入れるより先頭にあれば十分です）
+            // CSVのヘッダー
             fputcsv($stream, ['ユーザー名', $user->name]);
             fputcsv($stream, []); // 1行空ける
-            fputcsv($stream, ['日付', '出勤時間', '退勤時間']);
+
+            fputcsv($stream, ['日付', '出勤時間', '退勤時間', '休憩時間', '合計時間']);
 
             // データの書き込み
             foreach ($attendanceRecords as $record) {
                 $date = $record->punch_in_time ? Carbon::parse($record->punch_in_time)->format('Y-m-d') : '';
                 $punchIn = $record->punch_in_time ? Carbon::parse($record->punch_in_time)->format('H:i') : '';
                 $punchOut = $record->punch_out_time ? Carbon::parse($record->punch_out_time)->format('H:i') : '';
+                $restTime = $record->formatted_rest_time ?? '';
+                $workTime = $record->formatted_work_time ?? '';
 
+                // 💡 配列に値を追加
                 fputcsv($stream, [
                     $date,
                     $punchIn,
                     $punchOut,
+                    $restTime,
+                    $workTime,
                 ]);
             }
             fclose($stream);

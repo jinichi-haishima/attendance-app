@@ -53,7 +53,7 @@ class AttendanceRecordController extends Controller
 
         return AttendanceRecordResource::collection($records);
     }
-    
+
     /**
      * 勤怠レコードのAPIエンドポイント
      * URL例: /api/v1/attendance-records

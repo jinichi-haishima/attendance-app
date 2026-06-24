@@ -15,21 +15,33 @@ class AttendanceApprovalController extends Controller
 {
     public function show($id, Request $request)
     {
-        /** 申請IDに基づいて申請内容を取得し、管理者用の承認画面に表示するロジックを実装 */
-        $attendanceRequest = AttendanceRequest::with('rest_requests')->findOrFail($id); // 休憩申請も一緒に取得
+        /**
+         * 勤怠申請の詳細表示
+         * 💡 URLの {id}（勤怠申請のプライマ
+         * リキー）から直接データを取得
+         * @param int $id 勤怠申請のプライマリキー
+         * @param Request $request リクエストオブジェクト（クエリパラメータ取得用）
+         * @return \Illuminate\View\View 勤怠申請詳細画面のビュー
+         */
+        $attendanceRequest = AttendanceRequest::with('rest_requests')->findOrFail($id);
         $date = $request->query('date');
         return view('admin.approval', compact('attendanceRequest', 'date'));
     }
 
     public function approve($id, Request $request)
     {
-        /** 申請IDに基づいて申請内容を取得し、承認処理を行うロジックを実装 */
+        /**
+         * 勤怠申請の承認処理
+         * 💡 URLの {id}（勤怠申請のプライマリキー）から直接データを取得
+         * @param int $id 勤怠申請のプライマリキー
+         * @param Request $request リクエストオブジェクト（クエリパラメータ取得用）
+         * @return \Illuminate\Http\JsonResponse 承認結果のJSONレスポンス
+         */
         // トランザクション開始
         DB::beginTransaction();
         try {
 
             $attendanceRequest = AttendanceRequest::with('rest_requests')->findOrFail($id);
-
             $attendanceRecord = AttendanceRecord::findOrFail($attendanceRequest->attendance_record_id);
 
             // 勤怠申請の承認処理
@@ -50,7 +62,7 @@ class AttendanceApprovalController extends Controller
                 RestRecord::create([
                     'attendance_record_id' => $attendanceRecord->id,
                     'rest_in_time' => $requestRest->rest_in_time,
-                    'rest_out_time' =>$requestRest->rest_out_time, 
+                    'rest_out_time' =>$requestRest->rest_out_time,
                 ]);
             }
         // 申請のステータスを「承認」に更新

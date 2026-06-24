@@ -42,7 +42,7 @@ class RestTest extends TestCase
         $response = $this->actingAs($this->user)->get('/attendance');
         $response->assertStatus(200);
         $response->assertSee('休憩入');
-        
+
         $response = $this->actingAs($this->user)->post('/attendance/rest-in');
         $response->assertStatus(302);
         $response->assertRedirect('/attendance');
@@ -200,7 +200,7 @@ class RestTest extends TestCase
 
         $response = $this->actingAs($this->user)->get('/attendance-list');
         $response->assertStatus(200);
-        $response->assertSee('1:30'); 
+        $response->assertSee('1:30');
 
         // 勤怠一覧画面で、日付、出勤時間、休憩時間の順番で表示されていることを確認
         $response->assertSeeInOrder([

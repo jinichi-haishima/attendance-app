@@ -20,7 +20,7 @@ class AttendanceDetailTest extends TestCase
     {
         $user = User::factory()->create();
         $targetDate = now()->setTime(0, 0, 0);
-        
+
         $attendanceRecord = AttendanceRecord::factory()->create([
             'user_id' => $user->id,
             'punch_in_time' => $targetDate->copy()->addHours(9),
@@ -33,13 +33,10 @@ class AttendanceDetailTest extends TestCase
             'rest_out_time' => $targetDate->copy()->addHours(13),
         ]);
 
-    
         $admin = User::factory()->create(['is_admin' => true]);
         $this->actingAs($admin);
 
-        $response = $this->get(route('admin.detail', [
-            'date' => $targetDate->format('Y-m-d'),  
-            'user_id' => $user->id]));
+        $response = $this->get(route('admin.detail', ['id' => $user->id]) . '?date=' . $targetDate->format('Y-m-d'));
 
         $response->assertStatus(200);
         $response->assertSee($user->name);
@@ -56,7 +53,7 @@ class AttendanceDetailTest extends TestCase
     {
         $user = User::factory()->create();
         $targetDate = now()->setTime(0, 0, 0);
-        
+
         $attendanceRecord = AttendanceRecord::factory()->create([
             'user_id' => $user->id,
             'punch_in_time' => $targetDate->copy()->addHours(9),
@@ -66,14 +63,10 @@ class AttendanceDetailTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true]);
         $this->actingAs($admin);
 
-        $response = $this->get(route('admin.detail', [
-            'date' => $targetDate->format('Y-m-d'),  
-            'user_id' => $user->id]));
+        $response = $this->get(route('admin.detail', ['id' => $user->id]) . '?date=' . $targetDate->format('Y-m-d'));
 
         $response->assertStatus(200);
-        $response = $this->post(route('admin.attendance.update', [
-            'date' => $targetDate->format('Y-m-d'),  
-            'user_id' => $user->id]), [
+        $response = $this->post(route('admin.attendance.update', ['id' => $user->id]) . '?date=' . $targetDate->format('Y-m-d'), [
             'punch_in_time' => '15:00',
             'punch_out_time' => '13:00',
             'reason' => 'テストのため',
@@ -91,10 +84,10 @@ class AttendanceDetailTest extends TestCase
      * 休憩開始時間が退勤時間より後になっている場合、エラーメッセージが表示される
      */
     public function test_attendance_detail_shows_error_when_rest_in_after_clock_out(): void
-    { 
+    {
         $user = User::factory()->create();
         $targetDate = now()->setTime(0, 0, 0);
-        
+
         $attendanceRecord = AttendanceRecord::factory()->create([
             'user_id' => $user->id,
             'punch_in_time' => $targetDate->copy()->addHours(9),
@@ -102,14 +95,9 @@ class AttendanceDetailTest extends TestCase
         ]);
 
         $admin = User::factory()->create(['is_admin' => true]);
-        $response =$this->actingAs($admin)->get(route('admin.detail', [
-            'date' => $targetDate->format('Y-m-d'),  
-            'user_id' => $user->id
-            ]));
+        $response =$this->actingAs($admin)->get(route('admin.detail', ['id' => $user->id]) . '?date=' . $targetDate->format('Y-m-d'));
 
-        $response = $this->post(route('admin.attendance.update', [
-            'date' => $targetDate->format('Y-m-d'),  
-            'user_id' => $user->id]), [
+        $response = $this->post(route('admin.attendance.update', ['id' => $user->id]) . '?date=' . $targetDate->format('Y-m-d'), [
             'punch_in_time' => '09:00',
             'punch_out_time' => '18:00',
             'reason' => 'テストのため',
@@ -142,15 +130,9 @@ class AttendanceDetailTest extends TestCase
         ]);
 
         $admin = User::factory()->create(['is_admin' => true]);
-        $response =$this->actingAs($admin)->get(route('admin.detail', [
-            'date' => $targetDate->format('Y-m-d'),  
-            'user_id' => $user->id
-            ]));
+        $response =$this->actingAs($admin)->get(route('admin.detail', ['id' => $user->id]) . '?date=' . $targetDate->format('Y-m-d'));
 
-        $response = $this->post(route('admin.attendance.update', [
-            'date' => $targetDate->format('Y-m-d'),  
-            'user_id' => $user->id
-            ]), [
+        $response = $this->post(route('admin.attendance.update', ['id' => $user->id]) . '?date=' . $targetDate->format('Y-m-d'), [
             'punch_in_time' => '09:00',
             'punch_out_time' => '13:00',
             'reason' => 'テストのため',
@@ -182,21 +164,15 @@ class AttendanceDetailTest extends TestCase
         ]);
 
         $admin = User::factory()->create(['is_admin' => true]);
-        $response =$this->actingAs($admin)->get(route('admin.detail', [
-            'date' => $targetDate->format('Y-m-d'),  
-            'user_id' => $user->id
-            ]));
+        $response =$this->actingAs($admin)->get(route('admin.detail', ['id' => $user->id]) . '?date=' . $targetDate->format('Y-m-d'));
 
-        $response = $this->post(route('admin.attendance.update', [
-            'date' => $targetDate->format('Y-m-d'),  
-            'user_id' => $user->id
-            ]), [
+        $response = $this->post(route('admin.attendance.update', ['id' => $user->id]) . '?date=' . $targetDate->format('Y-m-d'), [
             'punch_in_time' => '10:00',
             'punch_out_time' => '18:00',
             'reason' => '',
             'rest_records' => [
                 'new' => [
-                    'rest_in_time' => '12:00', 
+                    'rest_in_time' => '12:00',
                     'rest_out_time' => '13:00'
                 ]
             ]

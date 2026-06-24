@@ -18,6 +18,7 @@
         <form method="POST" action="{{ route('attendance-records.store') }}" class="attendance-detail-form">
             @csrf
             <input type="hidden" name="record_id" value="{{ $record->id }}">
+            <input type="hidden" name="date" value="{{ request()->query('date', now()->format('Y-m-d')) }}">
             <table class="attendance-detail-table">
                 <tr class="attendance-detail-row">
                     <th class="attendance-detail-th">名前</th>
@@ -27,12 +28,16 @@
                 <tr class="attendance-detail-row">
                     <th class="attendance-detail-th">日付</th>
                     <td class="attendance-detail-td">
+                        @php
+                            $urlDate = \Carbon\Carbon::parse(request()->query('date', now()));
+                        @endphp
+
                         <span class="date-year">
-                            {{ $record->punch_in_time ? \Carbon\Carbon::parse($record->punch_in_time)->format('Y年') : '' }}
+                            {{ $urlDate->format('Y年') }}
                         </span>
-                        
+
                         <span class="date-month-day">
-                            {{ $record->punch_in_time ? \Carbon\Carbon::parse($record->punch_in_time)->isoFormat('M月D日(ddd)') : '' }}
+                            {{ $urlDate->isoFormat('M月D日(ddd)') }}
                         </span>
                     </td>
                 </tr>
@@ -81,11 +86,10 @@
                             </span>
                         @else
                         <input type="hidden" name="rest_records[{{ $loop->index }}][id]" value="{{ $rest->id }}">
-                        
-                        <input type="text" name="rest_records[{{ $loop->index }}][rest_in_time]" class="rest-time-input" 
+                        <input type="text" name="rest_records[{{ $loop->index }}][rest_in_time]" class="rest-time-input"
                             value="{{ $rest->rest_in_time ? \Carbon\Carbon::parse($rest->rest_in_time)->isoFormat('HH:mm') : '' }}">
                         <span class="time-separator">〜</span>
-                        <input type="text" name="rest_records[{{ $loop->index }}][rest_out_time]" class="rest-time-input" 
+                        <input type="text" name="rest_records[{{ $loop->index }}][rest_out_time]" class="rest-time-input"
                             value="{{ $rest->rest_out_time ? \Carbon\Carbon::parse($rest->rest_out_time)->isoFormat('HH:mm') : '' }}">
                         @endif
                         @error('rest_time')
@@ -102,7 +106,7 @@
                 {{-- 休憩の追加分は、承認待ち、承認済みの時は表示しない --}}
                 @if ($latestRequest?->status !== '承認待ち' && $latestRequest?->status !== '承認済み')
                     <tr class="attendance-detail-row">
-                        <th class="attendance-detail-th">休憩{{ $record->rest_records->count() + 1 }}（追加分）</th>
+                        <th class="attendance-detail-th">休憩{{ $record->rest_records->count() + 1 }}</th>
                         <td class="attendance-detail-td flex-td">
                             <input type="text" name="rest_records[new][rest_in_time]" class="rest-time-input" value="" placeholder="00:00">
                             <span class="time-separator">〜</span>
@@ -132,7 +136,7 @@
                 @if($latestRequest && $latestRequest->status === '承認待ち')
                     <div class="alert-warning"> *承認待ちのため修正はできません。</div>
                 @elseif($latestRequest && $latestRequest->status === '承認済み')
-                    <div class="alert-approved"> 
+                    <div class="alert-approved">
                         <button type="button" class="disabled-button" disabled>承認済み</button>
                     </div>
                 @else

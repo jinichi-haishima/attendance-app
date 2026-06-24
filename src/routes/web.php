@@ -42,7 +42,7 @@ Route::middleware(['auth', 'verified','can:admin-only'])->prefix('admin')->group
 // --- 👨‍💼 管理者用の画面ルート ---
     Route::post('/logout', [Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::class, 'destroy'])->name('admin.logout');
     Route::get('attendance/list', [AdminController::class, 'index'])->name('admin.index');
-    Route::get('attendance', [AdminController::class, 'detail'])->name('admin.detail');
+    Route::get('attendance/{id}', [AdminController::class, 'detail'])->name('admin.detail');
     Route::post('attendance/update', [AdminController::class, 'update'])->name('admin.attendance.update');
     Route::get('staff/list', [StaffController::class, 'index'])->name('admin.staff.list');
     Route::get('attendance/staff/{id}', [StaffController::class, 'show'])->name('admin.staff.show');
@@ -59,7 +59,7 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::post('/attendance/rest-in', [AttendanceController::class, 'restIn'])->name('attendance.rest-in');
     Route::post('/attendance/rest-out', [AttendanceController::class, 'restOut'])->name('attendance.rest-out');
     Route::get('/attendance-list', [AttendanceRecordController::class, 'index'])->name('attendance-records.index');
-    Route::get('/attendance/detail', [AttendanceRecordController::class, 'detail'])->name('attendance-records.detail');
+    Route::get('/attendance/detail/{id}', [AttendanceRecordController::class, 'detail'])->name('attendance-records.detail');
     Route::post('/attendance/store', [AttendanceRecordController::class, 'store'])->name('attendance-records.store');
     Route::get('/stamp_correction_request/list', [AttendanceRequestController::class, 'index'])->name('attendance-requests.index');
     Route::get('/attendance/report', [AttendanceReportController::class, 'index'])->name('attendance.report');

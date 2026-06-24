@@ -8,13 +8,11 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Requests\CorrectionRequest;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceRequest;
-use App\Models\RestRecord;
 use App\Models\RestRequest;
 use Carbon\Carbon;
 
 class AttendanceRecordController extends Controller
-{   
-
+{
     public function index(Request $request)
     /**
      * 勤怠記録の一覧表示
@@ -60,12 +58,12 @@ class AttendanceRecordController extends Controller
 
         // その日の打刻データがあるか、先ほどの連想配列から探す
         $dateString = $date->format('Y-m-d');
-        $record = $attendanceRecords->get($dateString); 
+        $record = $attendanceRecords->get($dateString);
 
         // 日付情報と打刻データをセットにして配列に入れる
         $calendarDates[] = [
-            'date' => $date,       
-            'record' => $record 
+            'date' => $date,
+            'record' => $record
         ];
     }
 
@@ -77,43 +75,63 @@ class AttendanceRecordController extends Controller
     ]);
     }
 
-    public function detail(Request $request)
+    public function detail($id, Request $request)
     {
+        /**
+         * 勤怠記録の詳細表示
+         * URL例: /attendance-records/1?date=2026-06-24
+         * クエリパラメータの「date」は「YYYY-MM-DD」の形式で、表示したい日付を指定します。
+         * 例: ?date=2026-06-24 → 2026年6月24日の勤怠記録
+         * クエリパラメータがない場合は、現在の日付を表示します。
+         * @param int $id 勤怠記録のID（ユーザーIDとして扱う）
+         * @param Request $request リクエストオブジェクト（クエリパラメータ取得用）
+         * @return \Illuminate\View\View 勤怠詳細画面のビュー
+         */
         $user = Auth::user();
-        $attendanceRecordId = $request->query('id');
 
-        if (!$attendanceRecordId) {
-            return redirect()->route('attendance-records.index')->with('error', '勤怠データが指定されていません。');
+        if ((int)$id !== $user->id) {
+            return redirect()->route('attendance-records.index')->with('error', '不正なアクセスです。');
         }
 
-        $record = AttendanceRecord::find($attendanceRecordId);
-
-        if (!$record || $record->user_id !== $user->id) {
-            return redirect()->route('attendance-records.index')->with('error', '勤怠記録が見つかりませんでした。');
+        $dateInput = $request->query('date', Carbon::now()->format('Y-m-d'));
+        try {
+            $currentDate = Carbon::parse($dateInput);
+        } catch (\Exception $e) {
+            $currentDate = Carbon::now();
         }
 
-        // この勤怠レコードに紐づく「承認待ち」の申請がないか探す
-        $latestRequest = AttendanceRequest::where('attendance_record_id', $record->id)
-            ->whereIn('status', ['pending', 'approved']) // 承認待ちおよび承認済みの申請を対象
-            ->latest()
+        // 1. まずは指定された日付のレコードがあるか探す
+        $record = AttendanceRecord::where('user_id', $user->id)
+            ->whereDate('punch_in_time', $currentDate->toDateString())
+            ->with('rest_records')
             ->first();
 
-        // 申請（承認待ち）がある場合は、その内容を優先表示する。ない場合は、元の勤怠データを表示する。
-        if ($latestRequest) {
-            $record->rest_records = $latestRequest->rest_requests; 
-
-            $record->punch_in_time = $latestRequest->punch_in_time ? $latestRequest->punch_in_time : null; 
-            $record->punch_out_time = $latestRequest->punch_out_time ? $latestRequest->punch_out_time: null;
-        } else {
-            $record->punch_in_time = $record->punch_in_time ? $record->punch_in_time : null;
-            $record->punch_out_time = $record->punch_out_time ? $record->punch_out_time : null;
-            $record->rest_records = $record->rest_records ?? collect();
+        // 💡 【ここを修正】データがなかったら、その場でデータベースに枠だけ作成
+        if (!$record) {
+            $record = AttendanceRecord::create([
+                'user_id' => $user->id,
+                'punch_in_time' => $currentDate->copy()->startOfDay(),
+                'punch_out_time' => null,
+            ]);
+            // 休憩はまだ無いので空のコレクションを入れておく
+            $record->setRelation('rest_records', collect());
         }
 
-        // 表示用の日付
-        $displayDate = $record->punch_in_time 
-            ? $record->punch_in_time->format('Y年m月d日')
-            : now()->format('Y年m月d日');
+        $latestRequest = null;
+        if ($record->id) {
+            $latestRequest = AttendanceRequest::where('attendance_record_id', $record->id)
+                ->whereIn('status', ['pending', 'approved'])
+                ->latest()
+                ->first();
+        }
+
+        if ($latestRequest) {
+            $record->rest_records = $latestRequest->rest_requests;
+            $record->punch_in_time = $latestRequest->punch_in_time;
+            $record->punch_out_time = $latestRequest->punch_out_time;
+        }
+
+        $displayDate = $currentDate->format('Y年m月d日');
 
         return view('attendance.detail', [
             'record' => $record,
@@ -124,50 +142,58 @@ class AttendanceRecordController extends Controller
 
     public function store(CorrectionRequest $request)
     {
-        //* 勤怠修正申請の保存処理
-        // 画面から送られてくるデータを受け取る (例: 出勤時間、退勤時間、休憩時間の開始と終了、修正理由など)
+        /**
+         * 勤怠修正申請の保存処理
+         * @param CorrectionRequest $request バリデーション済みのリクエスト
+         * @return \Illuminate\Http\RedirectResponse リダイレクトレスポンス
+         */
         $user = Auth::user();
         $recordId = $request->input('record_id');
         $punchInTime = $request->input('punch_in_time');
         $punchOutTime = $request->input('punch_out_time');
         $restRecords = $request->input('rest_records', []);
-        $reason = $request->input('reason'); // 画面の備考欄を「申請理由」として扱う
+        $reason = $request->input('reason');
 
-        // 1. 元になる本番の勤怠記録が存在するか一応チェック
+        // 1. 元になる本番の勤怠記録が存在するかチェック
         $record = AttendanceRecord::where('id', $recordId)->where('user_id', $user->id)->first();
         if (!$record) {
             return redirect()->route('attendance-records.index')->with('error', '勤怠記録が見つかりませんでした。');
         }
-        //対象の日にちを特定するための変数。打刻時間があればその日付、なければ今日の日付を使う
-        $targetDate = $record->punch_in_time ? $record->punch_in_time->format('Y-m-d') : now()->format('Y-m-d');
 
-        // ★安全のためにトランザクションを開始（親か子のどちらかでエラーが起きたら全部白紙に戻す）
-        DB::transaction(function () use ($user, $record, $punchInTime, $punchOutTime, $reason, $restRecords, $targetDate) {
-        
-        // 2. 親テーブル（attendance_requests）に申請データを「新規作成」する
-        $attendanceRequest = AttendanceRequest::create([
-            'user_id' => $user->id,
-            'attendance_record_id' => $record->id, 
-            'punch_in_time' => $punchInTime ? Carbon::parse($targetDate . ' ' . $punchInTime) : null,
-            'punch_out_time' => $punchOutTime ? Carbon::parse($targetDate . ' ' . $punchOutTime) : null,
-            'status' => 'pending', // 最初は必ず「承認待ち」
-            'reason' => $reason,   
-        ]);
-
-        // 3. 子テーブル（rest_requests）に休憩の申請データを保存していく
-        foreach ($restRecords as $key => $restData) {
-            // 開始時間と終了時間の両方が入力されている場合のみ申請を受け付ける
-            if (!empty($restData['rest_in_time']) && !empty($restData['rest_out_time'])) {
-                
-                RestRequest::create([
-                    'attendance_request_id' => $attendanceRequest->id, 
-                    'rest_in_time' => Carbon::parse($targetDate . ' ' . $restData['rest_in_time']),
-                    'rest_out_time' => Carbon::parse($targetDate . ' ' . $restData['rest_out_time']),
-                ]);
-            }
+        // 💡 【ここを修正】画面のhiddenフィールドから送られてきた日付（Y-m-d）を最優先で使います
+        // もし送られてきていなければ、本番レコードの時間、それもなければ今日にします。
+        if ($request->has('date')) {
+            $targetDate = $request->input('date');
+        } else {
+            $targetDate = $record->punch_in_time ? $record->punch_in_time->format('Y-m-d') : now()->format('Y-m-d');
         }
-    });
 
-    return redirect()->route('attendance-records.index')->with('success', '修正申請を送信しました。管理者の承認をお待ちください。');
+        // ★安全のためにトランザクションを開始
+        DB::transaction(function () use ($user, $record, $punchInTime, $punchOutTime, $reason, $restRecords, $targetDate) {
+
+            // 2. 親テーブル（attendance_requests）に申請データを「新規作成」
+            $attendanceRequest = AttendanceRequest::create([
+                'user_id' => $user->id,
+                'attendance_record_id' => $record->id,
+                // 💡 選択した正しい日付（$targetDate）と入力された時刻をガッチャンコします
+                'punch_in_time' => $punchInTime ? Carbon::parse($targetDate . ' ' . $punchInTime) : null,
+                'punch_out_time' => $punchOutTime ? Carbon::parse($targetDate . ' ' . $punchOutTime) : null,
+                'status' => 'pending',
+                'reason' => $reason,
+            ]);
+
+            // 3. 子テーブル（rest_requests）に休憩の申請データを保存
+            foreach ($restRecords as $key => $restData) {
+                if (!empty($restData['rest_in_time']) && !empty($restData['rest_out_time'])) {
+                    RestRequest::create([
+                        'attendance_request_id' => $attendanceRequest->id,
+                        'rest_in_time' => Carbon::parse($targetDate . ' ' . $restData['rest_in_time']),
+                        'rest_out_time' => Carbon::parse($targetDate . ' ' . $restData['rest_out_time']),
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->route('attendance-records.index')->with('success', '修正申請を送信しました。管理者の承認をお待ちください。');
     }
 }

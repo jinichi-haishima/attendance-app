@@ -109,10 +109,69 @@ MAIL_FROM_ADDRESSは任意のメールアドレスを入力してください。
 | updated_at | timestamp |  |  |  |  | レコード更新日時 |
 
 ## ER図
-![alt](docs/ER.png)
+```mermaid
+erDiagram
+    users ||--o{ attendance_records : "1対多"
+    users ||--o{ attendance_requests : "1対多 (申請者)"
+    users ||--o{ attendance_requests : "1対多 (承認者)"
+    attendance_records ||--o{ rest_records : "1対多"
+    attendance_records ||--o| attendance_requests : "1対1"
+    attendance_requests ||--o{ rest_requests : "1対多"
+
+    users {
+        bigint ID PK
+        string name
+        string email
+        timestamp email_verified_at
+        string password
+        string rememberToken
+        boolean is_admin
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    attendance_records {
+        bigint ID PK
+        bigint user_id FK
+        timestamp punch_in_time
+        timestamp punch_out_time
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    rest_records {
+        bigint ID PK
+        bigint attendance_record_id FK
+        timestamp rest_in_time
+        timestamp rest_out_time
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    attendance_requests {
+        bigint ID PK
+        bigint user_id FK
+        bigint attendance_record_id FK
+        timestamp punch_in_time
+        timestamp punch_out_time
+        string status
+        bigint approved_by FK
+        string reason
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    rest_requests {
+        bigint ID PK
+        bigint attendance_request_id FK
+        timestamp rest_in_time
+        timestamp rest_out_time
+        timestamp created_at
+    }
+```
 
 ## テストアカウント
-name:　ユーザー1（一般）
+name: ユーザー1（一般）
 email: user1@example.com
 password: password
 メール認証済み
@@ -129,7 +188,7 @@ password: password
 (is_admin = true)
 -------------------------
 
-##　テストデータ
+## テストデータ
 ### 【user1 の意図的データ】
 * **過去 5 ヶ月**: 各月平日 15 日 = 75 日 の通常勤務（9:00-18:00）
 * **当月 17 日 のパターン**:
