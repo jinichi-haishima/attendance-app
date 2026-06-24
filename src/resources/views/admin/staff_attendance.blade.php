@@ -30,6 +30,7 @@
                         <th class="attendance-table-th">詳細</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @foreach($calendarDates as $attendance)
                     <tr class="attendance-table-row">
@@ -38,27 +39,37 @@
                         </td>
                         {{-- 出勤時間 --}}
                         <td class="attendance-table-td">
-                            {{ $attendance['attendance']?->punch_in_time ? \Carbon\Carbon::parse($attendance['attendance']->punch_in_time)->format('H:i') : '' }}
+                            {{-- 💡 $attendance['attendance'] が存在し、かつ時刻が 00:00:00 ではない場合のみ表示します --}}
+                            @if($attendance['attendance'] && $attendance['attendance']->punch_in_time && \Carbon\Carbon::parse($attendance['attendance']->punch_in_time)->format('H:i:s') !== '00:00:00')
+                                {{ \Carbon\Carbon::parse($attendance['attendance']->punch_in_time)->format('H:i') }}
+                            @else
+                                {{-- 00:00:00 の時、またはデータがない時は空欄 --}}
+                            @endif
                         </td>
-                        
+
                         {{-- 退勤時間 --}}
                         <td class="attendance-table-td">
                             {{ $attendance['attendance']?->punch_out_time ? \Carbon\Carbon::parse($attendance['attendance']->punch_out_time)->format('H:i') : '' }}
                         </td>
-                        
+
                         {{-- 休憩時間 --}}
                         <td class="attendance-table-td">
-                            {{ $attendance['attendance'] ? $attendance['attendance']->formatted_rest_time : '' }}
+                            {{-- 💡 出勤時間が 00:00:00 の（枠だけの）時は、休憩も表示しない --}}
+                            @if($attendance['attendance'] && $attendance['attendance']->punch_in_time && \Carbon\Carbon::parse($attendance['attendance']->punch_in_time)->format('H:i:s') !== '00:00:00')
+                                {{ $attendance['attendance']->formatted_rest_time }}
+                            @endif
                         </td>
-                        
+
                         {{-- 労働時間 --}}
                         <td class="attendance-table-td">
-                            {{ $attendance['attendance'] ? $attendance['attendance']->formatted_work_time : '' }}
+                            @if($attendance['attendance'] && $attendance['attendance']->punch_in_time && \Carbon\Carbon::parse($attendance['attendance']->punch_in_time)->format('H:i:s') !== '00:00:00')
+                                {{ $attendance['attendance']->formatted_work_time }}
+                            @endif
                         </td>
-    
+
 
                         <td class="attendance-table-td">
-                            <a href="{{ route('admin.detail', ['date' => $attendance['date']->format('Y-m-d'), 'user_id' => $user->id]) }}" class="detail-link">詳細</a>
+                            <a href="{{ route('admin.detail', ['id' => $user->id]) }}?date={{ $attendance['date']->format('Y-m-d') }}" class="detail-link">詳細</a>
                         </td>
                     </tr>
                     @endforeach

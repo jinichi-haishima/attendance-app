@@ -36,7 +36,7 @@ class AttendanceListTest extends TestCase
             'user_id' => $this->user->id,
             'punch_in_time' => $yesterday->copy()->setTime(9, 0, 0),
             'punch_out_time' => $yesterday->copy()->setTime(18, 0, 0),
-        ]); 
+        ]);
 
         RestRecord::factory()->create([
             'attendance_record_id' => $record1->id,
@@ -142,9 +142,9 @@ class AttendanceListTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('attendance-records.detail',[
             'id' => $attendanceRecord->id
         ]));
-        
+
         $response->assertStatus(200);
-        $response->assertSee($attendanceRecord->punch_in_time->format('H:i')); 
-        $response->assertSee($attendanceRecord->punch_out_time->format('H:i')); 
+        $response->assertSee($attendanceRecord->punch_in_time->format('H:i'));
+        $response->assertSee($attendanceRecord->punch_out_time->format('H:i'));
     }
 }

@@ -42,14 +42,21 @@ class AttendanceDetailTest extends TestCase
     /**
      * 勤怠詳細画面の「日付」が選択した日付になっている
      */
-    public function test_attendance_detail_shows_selected_date():void
+    public function test_attendance_detail_shows_selected_date(): void
     {
+        // 💡 3日前の日付を確実に固定して変数に持っておきます
+        $targetDate = now()->subDays(3)->setTime(10, 0, 0);
+
         $attendanceRecord = AttendanceRecord::factory()->create([
             'user_id' => $this->user->id,
-            'punch_in_time' => now()->subDays(3)->setTime(10, 0, 0),
+            'punch_in_time' => $targetDate,
         ]);
 
-        $response = $this->actingAs($this->user)->get(route('attendance-records.detail', ['id' => $attendanceRecord->id]));
+        // 💡 【ここを修正】URLの末尾に「?date=2026-06-21」の形でクエリパラメータを結合します
+        $response = $this->actingAs($this->user)->get(
+            route('attendance-records.detail', ['id' => $this->user->id]) . '?date=' . $targetDate->format('Y-m-d')
+        );
+
         $response->assertStatus(200);
         $response->assertSee($attendanceRecord->punch_in_time->format('Y年'));
         $response->assertSee($attendanceRecord->punch_in_time->isoFormat('M月D日'));
@@ -60,36 +67,48 @@ class AttendanceDetailTest extends TestCase
      */
     public function test_attendance_detail_shows_punch_in_out_time(): void
     {
+        // 💡 2日前の日付を確実に固定して変数に持っておきます
+        $targetDate = now()->subDays(2);
+
         $attendanceRecord = AttendanceRecord::factory()->create([
             'user_id' => $this->user->id,
-            'punch_in_time' => now()->subDays(2)->setTime(9, 0, 0),
-            'punch_out_time' => now()->subDays(2)->setTime(17, 0, 0),
+            'punch_in_time' => $targetDate->copy()->setTime(9, 0, 0),
+            'punch_out_time' => $targetDate->copy()->setTime(17, 0, 0),
         ]);
 
-        $response = $this->actingAs($this->user)->get(route('attendance-records.detail', ['id' => $attendanceRecord->id]));
+        $response = $this->actingAs($this->user)->get(
+            route('attendance-records.detail', ['id' => $this->user->id]) . '?date=' . $targetDate->format('Y-m-d')
+        );
+
         $response->assertStatus(200);
         $response->assertSee($attendanceRecord->punch_in_time->format('H:i'));
         $response->assertSee($attendanceRecord->punch_out_time->format('H:i'));
     }
-    
+
     /**
      * 「休憩」にて記されている時間がログインユーザーの打刻と一致している
      */
     public function test_attendance_detail_shows_rest_time(): void
     {
+        // 💡 1日前の日付を確実に固定して変数に持っておきます
+        $targetDate = now()->subDays(1);
+
         $attendanceRecord = AttendanceRecord::factory()->create([
             'user_id' => $this->user->id,
-            'punch_in_time' => now()->subDays(1)->setTime(9, 0, 0),
-            'punch_out_time' => now()->subDays(1)->setTime(18, 0, 0),
+            'punch_in_time' => $targetDate->copy()->setTime(9, 0, 0),
+            'punch_out_time' => $targetDate->copy()->setTime(18, 0, 0),
         ]);
 
         $restRecord = RestRecord::factory()->create([
             'attendance_record_id' => $attendanceRecord->id,
-            'rest_in_time' => now()->subDays(1)->setTime(13, 0, 0),
-            'rest_out_time' => now()->subDays(1)->setTime(14, 0, 0),
+            'rest_in_time' => $targetDate->copy()->setTime(13, 0, 0),
+            'rest_out_time' => $targetDate->copy()->setTime(14, 0, 0),
         ]);
 
-        $response = $this->actingAs($this->user)->get(route('attendance-records.detail', ['id' => $attendanceRecord->id]));
+        $response = $this->actingAs($this->user)->get(
+            route('attendance-records.detail', ['id' => $this->user->id]) . '?date=' . $targetDate->format('Y-m-d')
+        );
+
         $response->assertStatus(200);
         $response->assertSee($restRecord->rest_in_time->format('H:i'));
         $response->assertSee($restRecord->rest_out_time->format('H:i'));
@@ -151,7 +170,7 @@ class AttendanceDetailTest extends TestCase
         $response->assertStatus(302);
         $response->assertSessionHasErrors(['rest_out_time_error' => '休憩時間もしくは退勤時間が不適切な値です']);
     }
-    
+
     /**
      * 備考欄が未入力の場合のエラーメッセージが表示される
      */
@@ -333,7 +352,7 @@ class AttendanceDetailTest extends TestCase
 
         $detailResponse = $this->actingAs($this->user)->get($expectedDetailUrl);
         $detailResponse->assertStatus(200);
-        
+
         $detailResponse->assertSee('10:00');
         $detailResponse->assertSee('19:00');
         $detailResponse->assertSee('12:00');

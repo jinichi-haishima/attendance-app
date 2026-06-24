@@ -21,7 +21,7 @@ class AttendanceReportTest extends TestCase
         $response = $this->get('/attendance/report');
 
         $response->assertStatus(302);
-        $response->assertRedirect('/login'); 
+        $response->assertRedirect('/login');
     }
 
     /**
@@ -64,7 +64,7 @@ class AttendanceReportTest extends TestCase
         $response->assertViewHas('graphData');
 
         // 勤怠記録がない場合、統計情報はゼロまたは空であることを確認
-        $response->assertSee('0h 0m'); 
+        $response->assertSee('0h 0m');
         $response->assertSee('0h 0m/日');
         $response->assertSee('0回');
         $response->assertSee('0日');

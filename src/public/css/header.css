@@ -47,7 +47,7 @@ a {
 
 .nav-list-group {
     display: flex;
-    gap: 30px;
+    gap: 50px;
 }
 
 .nav-list-group a {
@@ -60,6 +60,11 @@ a {
     display: inline-block;
     color: white;
     font-weight: bold;
+}
+
+.nav-list-item:last-child {
+    margin-right: 20px;
+    padding-right: 30px;
 }
 
 .logout-button {

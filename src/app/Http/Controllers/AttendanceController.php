@@ -10,6 +10,10 @@ use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    /**
+     * 勤怠画面の表示
+     * @return \Illuminate\View\View 勤怠画面のビュー
+     */
     public function index()
     {
         $user = Auth::user();
@@ -38,6 +42,10 @@ class AttendanceController extends Controller
         return view('attendance', compact('status'));
     }
 
+    /**
+     * 出勤打刻処理
+     * @return \Illuminate\Http\RedirectResponse リダイレクトレスポンス
+     */
     public function punchIn()
     {
         $user = Auth::user();
@@ -60,6 +68,10 @@ class AttendanceController extends Controller
         return redirect()->back()->with('success', '出勤しました。');
     }
 
+    /**
+     * 退勤打刻処理
+     * @return \Illuminate\Http\RedirectResponse リダイレクトレスポンス
+     */
     public function punchOut()
     {
         $user = Auth::user();
@@ -80,6 +92,10 @@ class AttendanceController extends Controller
         return redirect()->back()->with('success', '退勤しました。');
     }
 
+    /**
+     * 休憩開始打刻処理
+     * @return \Illuminate\Http\RedirectResponse リダイレクトレスポンス
+     */
     public function restIn()
     {
         $user = Auth::user();
@@ -107,6 +123,10 @@ class AttendanceController extends Controller
         return redirect()->back()->with('success', '休憩開始しました。');
     }
 
+    /**
+     * 休憩終了打刻処理
+     * @return \Illuminate\Http\RedirectResponse リダイレクトレスポンス
+     */
     public function restOut()
     {
         $user = Auth::user();

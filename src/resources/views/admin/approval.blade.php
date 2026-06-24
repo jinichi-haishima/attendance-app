@@ -4,12 +4,12 @@
     <link rel="stylesheet" href="{{ asset('css/detail.css') }}">
 @endsection
 
-@section('title', '勤怠承認')
+@section('title', '勤怠詳細')
 
 @section('content')
 <div class="wrapper">
     <div class="container">
-        <h1 class="page-title">勤怠承認</h1>
+        <h1 class="page-title">勤怠詳細</h1>
         @if (session('success'))
             <p class="alert alert-success">
                 {{ session('success') }}
@@ -17,9 +17,9 @@
         @endif
         <input type="hidden" name="record_id" value="{{ $attendanceRequest->id }}">
         <table class="attendance-detail-table">
-            <tr class="attendance-detail-row">  
+            <tr class="attendance-detail-row">
                 <th class="attendance-detail-th">名前</th>
-                <td class="attendance-detail-td">{{ $attendanceRequest->user?->name }}</td> 
+                <td class="attendance-detail-td">{{ $attendanceRequest->user?->name }}</td>
             </tr>
 
             <tr class="attendance-detail-row">

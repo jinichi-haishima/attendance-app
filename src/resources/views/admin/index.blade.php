@@ -15,7 +15,7 @@
             <div class="monthly-title">
                 <img src="{{ asset('images/calendar.png') }}" alt="カレンダー" class="calendar-icon">
                 <span class="monthly-text">{{ $displayDate }}</span>
-            </div>           
+            </div>
             <a href="{{ route('admin.index', ['date' => $nextDate]) }}" class="monthly-link">翌日<i class="fa-solid fa-arrow-right"></i></a>
         </div>
 
@@ -38,19 +38,20 @@
                             {{ $record->user->name }}
                         </td>
                         <td class="attendance-table-td">
-                            {{ $record->punch_in_time ? \Carbon\Carbon::parse($record->punch_in_time)->isoFormat('HH:mm') : '' }}
+                            {{ $record->punch_in_time && \Carbon\Carbon::parse($record->punch_in_time)->format('H:i:s') !== '00:00:00' ? \Carbon\Carbon::parse($record->punch_in_time)->isoFormat('HH:mm') : '' }}
                         </td>
+
                         <td class="attendance-table-td">
                             {{ $record->punch_out_time ? \Carbon\Carbon::parse($record->punch_out_time)->isoFormat('HH:mm') : '' }}
                         </td>
                         <td class="attendance-table-td">
-                            {{ $record->formatted_rest_time }}
+                            {{ $record->rest_time && \Carbon\Carbon::parse($record->rest_time)->format('H:i:s') !== '00:00:00' ? \Carbon\Carbon::parse($record->rest_time)->isoFormat('HH:mm') : '' }}
                         </td>
                         <td class="attendance-table-td">
                             {{ $record->formatted_work_time }}
                         </td>
                         <td class="attendance-table-td">
-                            <a href="{{ route('admin.detail', ['date' => $dateInput, 'user_id' => $record->user_id]) }}" class="detail-link">詳細</a>
+                            <a href="{{ route('admin.detail', ['id' => $record->user_id]) }}?date={{ $dateInput }}" class="detail-link">詳細</a>
                         </td>
                     </tr>
                     @endforeach

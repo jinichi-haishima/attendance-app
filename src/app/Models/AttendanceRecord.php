@@ -42,10 +42,10 @@ class AttendanceRecord extends Model
     public function getFormattedRestTimeAttribute()
     {
         // 総休憩分数（分）を計算
-        $totalMinutes = $this->rest_records->sum(function($rest) 
+        $totalMinutes = $this->rest_records->sum(function($rest)
         {
             if (!$rest->rest_in_time || !$rest->rest_out_time) return 0;
-            
+
             return Carbon::parse($rest->rest_out_time)->diffInMinutes(Carbon::parse($rest->rest_in_time));
         });
 

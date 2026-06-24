@@ -7,13 +7,13 @@ use App\Models\AttendanceRecord;
 use Carbon\Carbon;
 
 class AttendanceReportController extends Controller
-{   
+{
     public function index()
-    {   
+    {
         /**
          * 勤怠レコードから、過去6ヶ月分の勤務時間と残業時間のサマリーと月ごとの集計データを作成してビューに渡す
          * URL: /attendance/report
-         * @return \Illuminate\View\View 勤怠レポート画面のビュー 
+         * @return \Illuminate\View\View 勤怠レポート画面のビュー
          */
 
         // 1. 過去6ヶ月のデータを一括取得（休憩レコードも同時に取得してN+1を防止！）
@@ -21,13 +21,13 @@ class AttendanceReportController extends Controller
 
         $attendanceRecords = AttendanceRecord::where('user_id', auth()->id())
             ->where('punch_in_time', '>=', $sixMonthsAgo)
-            ->with('rest_records') 
+            ->with('rest_records')
             ->get();
 
         // 2. Collection メソッドを使って foreach なしでデータ加工
         $processedRecords = $attendanceRecords->map(function ($record) {
             // 上で作ったアクセサから「実労働（分）」を取得
-            $workingMinutes = $record->actual_work_minutes; 
+            $workingMinutes = $record->actual_work_minutes;
 
             // 8時間（480分）を超えた分を残業時間とする
             $overtimeMinutes = max(0, $workingMinutes - 480);
@@ -46,7 +46,7 @@ class AttendanceReportController extends Controller
         $summary = [
             'total_working_hours' => $this->formatMinutesToHours($totalWorkingMinutes),
             'total_overtime_hours' => $this->formatMinutesToHours($totalOvertimeMinutes),
-            'average_working_hours' => $this->formatMinutesToHours($averageWorkingMinutes), 
+            'average_working_hours' => $this->formatMinutesToHours($averageWorkingMinutes),
         ];
         // 4. 月ごとの集計データを作成
         $monthsBase = collect(range(5,0,-1))->mapWithKeys(function($i) {
@@ -60,7 +60,7 @@ class AttendanceReportController extends Controller
         // attendanceRecordsを月ごとにグループ化して、月ごとの集計を計算
         $monthlyData = $attendanceRecords->groupBy(function($record) {
             return Carbon::parse($record->punch_in_time)->format('Y-m');
-        })->map(function($recordInMonth) {           
+        })->map(function($recordInMonth) {
             $workingMinutes = $recordInMonth->sum('actual_work_minutes');
             $overtimeMinutes = $recordInMonth->sum(function($record) {
                 return max(0, $record->actual_work_minutes- 480);

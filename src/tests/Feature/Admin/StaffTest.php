@@ -130,7 +130,7 @@ class StaffTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.staff.show', ['id' => $staff->id]));
         $response->assertStatus(200);
 
-        $detailUrl = route('admin.detail', ['date' => $attendanceRecord->punch_in_time->format('Y-m-d'), 'user_id' => $staff->id]);
+        $detailUrl = route('admin.detail', ['id' => $staff->id]) . '?date=' . $attendanceRecord->punch_in_time->format('Y-m-d');
         $response->assertSee($detailUrl);
 
         $response = $this->actingAs($admin)->get($detailUrl);

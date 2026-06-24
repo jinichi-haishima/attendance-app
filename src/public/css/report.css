@@ -5,14 +5,16 @@
 }
 
 .container {
-    max-width: 1000px;
+    max-width: 1200px;
     width: 100%;
-    margin: 0 auto;
+    margin: 0px auto;
+    padding: 20px;
 }
 
 .description {
     font-size: 18px;
     margin-bottom: 20px;
+    font-weight: bold;
 }
 
 .summary-list {
@@ -51,5 +53,6 @@
 
 .monthly-table tr{
     border-bottom: 1px solid #E0E0E0;
+    height: 35px;
 }
 

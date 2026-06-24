@@ -55,7 +55,10 @@
                             </td>
                         @else
                             <td class="attendance-table-td">
-                                <a href="{{ route('attendance-records.detail', ['id' => $request->attendance_record_id,'date' => $request->punch_in_time ? \Carbon\Carbon::parse($request->punch_in_time)->format('Y-m-d') : '']) }}" class="detail-link" >詳細</a>
+                                <a href="{{ route('attendance-records.detail', [
+                                    'id' => auth()->id(),
+                                    'date' => $request->punch_in_time ? \Carbon\Carbon::parse($request->punch_in_time)->format('Y-m-d') : ''
+                                ]) }}" class="detail-link">詳細</a>
                             </td>
                         @endcan
                     </tr>

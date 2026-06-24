@@ -81,11 +81,11 @@
                             </span>
                         @else
                         <input type="hidden" name="rest_records[{{ $loop->index }}][id]" value="{{ $rest->id }}">
-                        
-                        <input type="text" name="rest_records[{{ $loop->index }}][rest_in_time]" class="rest-time-input" 
+
+                        <input type="text" name="rest_records[{{ $loop->index }}][rest_in_time]" class="rest-time-input"
                             value="{{ $rest->rest_in_time ? \Carbon\Carbon::parse($rest->rest_in_time)->isoFormat('HH:mm') : '' }}">
                         <span class="time-separator">〜</span>
-                        <input type="text" name="rest_records[{{ $loop->index }}][rest_out_time]" class="rest-time-input" 
+                        <input type="text" name="rest_records[{{ $loop->index }}][rest_out_time]" class="rest-time-input"
                             value="{{ $rest->rest_out_time ? \Carbon\Carbon::parse($rest->rest_out_time)->isoFormat('HH:mm') : '' }}">
                         @endif
                         @error('rest_time')
@@ -138,7 +138,7 @@
                 @if($latestRequest && $latestRequest->status === '承認待ち')
                     <div class="alert-warning"> *承認待ちのため修正はできません。</div>
                 @elseif($latestRequest && $latestRequest->status === '承認済み')
-                    <div class="alert-approved"> 
+                    <div class="alert-approved">
                         <button type="button" class="disabled-button" disabled>承認済み</button>
                     </div>
                 @else
