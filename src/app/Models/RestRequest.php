@@ -12,7 +12,7 @@ class RestRequest extends Model
     protected $fillable = [
         'attendance_request_id',
         'rest_in_time',
-        'rest_out_time', 
+        'rest_out_time',
     ];
 
     public function attendanceRequest()

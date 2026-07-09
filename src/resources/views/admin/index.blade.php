@@ -45,7 +45,7 @@
                             {{ $record->punch_out_time ? \Carbon\Carbon::parse($record->punch_out_time)->isoFormat('HH:mm') : '' }}
                         </td>
                         <td class="attendance-table-td">
-                            {{ $record->rest_time && \Carbon\Carbon::parse($record->rest_time)->format('H:i:s') !== '00:00:00' ? \Carbon\Carbon::parse($record->rest_time)->isoFormat('HH:mm') : '' }}
+                            {{ $record->formatted_rest_time !== ' 0:00' ? $record->formatted_rest_time : '' }}
                         </td>
                         <td class="attendance-table-td">
                             {{ $record->formatted_work_time }}

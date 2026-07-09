@@ -11,7 +11,7 @@
 @endsection
 
 @section('content')
-    <form method="POST" action="{{ route('register') }}" class="auth-form">
+    <form method="POST" action="{{ route('register') }}" class="auth-form" novalidate>
         @csrf
         <h1 class="auth-form-title">会員登録</h1>
         <div class="auth-form-group">

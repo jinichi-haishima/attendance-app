@@ -86,7 +86,7 @@ class AttendanceRecord extends Model
             return 0; // 未打刻などは0分とする
         }
 
-        // 1. 総勤務分数（こちらも 
+        // 1. 総勤務分数（こちらも
         $totalWorkMinutes = $this->punch_in_time->diffInMinutes($this->punch_out_time);
 
         // 2. 総休憩分数
@@ -96,7 +96,7 @@ class AttendanceRecord extends Model
         });
 
         $actualMinutes = $totalWorkMinutes - $totalRestMinutes;
-        
+
         return $actualMinutes < 0 ? 0 : $actualMinutes;
     }
 }
