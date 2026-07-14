@@ -53,7 +53,7 @@ class AttendanceRecord extends Model
         $hours = floor($totalMinutes / 60);
         $minutes = $totalMinutes % 60;
 
-        return sprintf('%2d:%02d', $hours, $minutes);
+        return sprintf('%d:%02d', $hours, $minutes);
     }
 
     // 勤務時間から休憩時間を引いた実働時間を「H:i」にする
@@ -63,7 +63,6 @@ class AttendanceRecord extends Model
             return '-';
         }
 
-        //、$this->... から直接繋ぐ形に修正
         $totalWorkMinutes = $this->punch_in_time->diffInMinutes($this->punch_out_time);
 
         $totalRestMinutes = $this->rest_records->sum(function($rest) {
@@ -80,23 +79,34 @@ class AttendanceRecord extends Model
         return sprintf('%2d:%02d', $hours, $minutes);
     }
 
+    // 実働時間を分単位で取得するアクセサ
     public function getActualWorkMinutesAttribute()
     {
-        if (!$this->punch_in_time || !$this->punch_out_time) {
-            return 0; // 未打刻などは0分とする
-        }
+    if (!$this->punch_in_time || !$this->punch_out_time) {
+        return 0; // 未打刻などは0分とする
+    }
 
-        // 1. 総勤務分数（こちらも
-        $totalWorkMinutes = $this->punch_in_time->diffInMinutes($this->punch_out_time);
+    // すべて日本時間（Asia/Tokyo）に統一してCarbonインスタンス化する
+    $punchIn  = Carbon::parse($this->punch_in_time, )->timezone('Asia/Tokyo');
+    $punchOut = Carbon::parse($this->punch_out_time, )->timezone('Asia/Tokyo');
 
-        // 2. 総休憩分数
-        $totalRestMinutes = $this->rest_records->sum(function ($rest) {
-            if (!$rest->rest_in_time || !$rest->rest_out_time) return 0;
-            return Carbon::parse($rest->rest_out_time)->diffInMinutes(Carbon::parse($rest->rest_in_time));
-        });
+    // 1. 総勤務分数（out と in の差分）
+    $totalWorkMinutes = $punchIn->diffInMinutes($punchOut);
 
-        $actualMinutes = $totalWorkMinutes - $totalRestMinutes;
+    // 2. 総休憩分数
+    $totalRestMinutes = $this->rest_records->sum(function ($rest) {
+        if (!$rest->rest_in_time || !$rest->rest_out_time) return 0;
 
-        return $actualMinutes < 0 ? 0 : $actualMinutes;
+        // 休憩時間も日本時間に統一
+        $restIn  = Carbon::parse($rest->rest_in_time, )->timezone('Asia/Tokyo');
+        $restOut = Carbon::parse($rest->rest_out_time,)->timezone('Asia/Tokyo');
+
+        // 休憩開始（in）から休憩終了（out）までの分数を計算
+        return $restIn->diffInMinutes($restOut);
+    });
+
+    $actualMinutes = $totalWorkMinutes - $totalRestMinutes;
+
+    return $actualMinutes < 0 ? 0 : $actualMinutes;
     }
 }

@@ -57,13 +57,22 @@ class AttendanceRecordController extends Controller
     /**
      * 勤怠レコードのAPIエンドポイント
      * URL例: /api/v1/attendance-records
-      * @param \Illuminate\Http\Request $request リクエストオブジェクト
+     * @param \Illuminate\Http\Request $request リクエストオブジェクト
      * @return \Illuminate\Http\Response 新しく作成された勤怠レコードの詳細を返す
      */
     public function store(StoreAttendanceRecordRequest $request)
     {
         $validated = $request->validated();
         $date = $validated['date'];
+
+        $userId = $request->user()->id;
+        $exists = AttendanceRecord::where('user_id', $userId)
+            ->whereDate('punch_in_time', $date)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'この日付の勤怠は既に登録されています。'], 422);
+        }
 
         // 💡 送られてきた日付と時刻を結合
         $punchInTime = "{$date} {$validated['clock_in']}";
