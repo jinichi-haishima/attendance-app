@@ -43,12 +43,12 @@ class StoreAttendanceRecordRequest extends FormRequest
                 ],
             'clock_out' => [
                 'nullable',
-                'date_format:H:i:s', 
+                'date_format:H:i:s',
                 'after:clock_in'
                 ],
             'comment' => [
-                'nullable', 
-                'string', 
+                'nullable',
+                'string',
                 'max:255'
                 ],
         ];

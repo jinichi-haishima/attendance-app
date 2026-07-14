@@ -16,7 +16,7 @@ class StaffController extends Controller
      */
     public function index()
     {
-        $users = User::all();
+        $users = User::onlyGeneral()->get();
         return view('admin.staff', compact('users'));
     }
 

@@ -18,7 +18,7 @@ class AttendanceRecordResource extends JsonResource
         return [
             'id'               => $this->id,
             'user_id'          => $this->user_id,
-            'user'             => new UserResource($this->whenLoaded('user')),
+            'user'             => $this->user ? $this->user->name : null,
             'date'             => $this->punch_in_time ? $this->punch_in_time->format('Y-m-d') : null,
             'clock_in'         => $this->punch_in_time ? $this->punch_in_time->format('H:i:s') : null,
             'clock_out'        => $this->punch_out_time ? $this->punch_out_time->format('H:i:s') : null,

@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\AttendanceRecordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,8 +15,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // 🔓 誰でもアクセスできるルート（一覧取得・詳細取得）
-Route::get('v1/attendance-records', ['App\Http\Controllers\Api\V1\AttendanceRecordController', 'index']);
-Route::get('v1/attendance-records/{attendanceRecord}', ['App\Http\Controllers\Api\V1\AttendanceRecordController', 'show']);
+Route::get('v1/attendance-records', [AttendanceRecordController::class, 'index']);
+Route::get('v1/attendance-records/{attendanceRecord}', [AttendanceRecordController::class, 'show']);
 
 // 🔒 認証ユーザーのみアクセスできるルート（作成・更新・削除）を復活させる
 Route::middleware('auth:sanctum')->prefix('v1')->group(function(){

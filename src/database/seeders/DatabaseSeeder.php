@@ -42,28 +42,37 @@ class DatabaseSeeder extends Seeder
             'is_admin' => true,
         ]);
 
-    for ($i = 5; $i >= 1; $i--) {
+    // 💡 1. 一般ユーザー（User1）を取得
+    $user1 = User::where('is_admin', false)->first();
+
+    if (!$user1) return;
+
+        // --- 📊 A. 過去5ヶ月分のデータ作成ループ ---
+        for ($i = 5; $i >= 1; $i--) {
             $targetMonth = Carbon::now()->subMonths($i);
             $workDaysCount = 0;
 
-            // その月の1日から末日までループ
             $date = $targetMonth->copy()->startOfMonth();
             while ($date->month == $targetMonth->month) {
-                // 平日（月〜金）かつ 15日に達するまで作成
+                // 教材通り、各月平日「15日間」のデータを生成
                 if ($date->isWeekday() && $workDaysCount < 15) {
-                    $this->createAttendance($user1->id, $date->copy(), '09:00:00', '18:00:00');
+                    $in = '09:00:00';
+                    $out = '18:00:00';
+
+                    $this->createAttendance($user1->id, $date->copy(), $in, $out);
                     $workDaysCount++;
                 }
                 $date->addDay();
             }
         }
 
-        // --- 📊 B. 当月のデータ (計17日分のパターン出し分け) ---
-        // 当月の平日を配列で取得
+        // --- 📊 B. 当月のデータ (今日が何日であれ、確実に17日分作る) ---
+        // 💡 複雑な条件を辞めて、「今月の1日」から順番に平日を25日分、強制的に配列に確保します
         $currentMonth = Carbon::now()->startOfMonth();
         $availableDates = [];
-        while ($currentMonth->month == Carbon::now()->month) {
-            if ($currentMonth->isWeekday() && $currentMonth->lt(Carbon::now())) {
+
+        for ($day = 0; $day < 30; $day++) {
+            if ($currentMonth->isWeekday()) {
                 $availableDates[] = $currentMonth->copy();
             }
             $currentMonth->addDay();
@@ -71,7 +80,6 @@ class DatabaseSeeder extends Seeder
 
         // 17日分のパターンを定義
         $patterns = [
-            // パターン名 => [出勤時間, 退勤時間, 日数]
             'normal'    => ['09:00:00', '18:00:00', 10], // 通常 10日
             'overtime'  => ['09:00:00', '20:00:00', 3],  // 残業 3日
             'late'      => ['09:30:00', '18:00:00', 2],  // 遅刻 2日
@@ -89,6 +97,7 @@ class DatabaseSeeder extends Seeder
             }
         }
     }
+
     private function createAttendance($userId, Carbon $date, $inTime, $outTime)
     {
         // 勤怠レコードの作成（clock_in_time などのカラム名はご自身の設計に合わせてください）

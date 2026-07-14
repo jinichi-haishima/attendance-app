@@ -23,6 +23,9 @@ class AttendanceReportController extends Controller
             ->where('punch_in_time', '>=', $sixMonthsAgo)
             ->with('rest_records')
             ->get();
+            $checkRecord = $attendanceRecords->first(function($r) {
+    return Carbon::parse($r->punch_in_time)->format('Y-m') === '2026-02';
+});
 
         // 2. Collection メソッドを使って foreach なしでデータ加工
         $processedRecords = $attendanceRecords->map(function ($record) {
@@ -95,12 +98,12 @@ class AttendanceReportController extends Controller
         });
         // 遅刻のカウント（例: 9:00以降の出勤を遅刻とする）
         $lateCount = $currentMonthRecords->filter(function($record) {
-            return Carbon::parse($record->punch_in_time)->format('H:i:s') > '09:00';
+            return Carbon::parse($record->punch_in_time)->format('H:i:s') > '09:00:00';
         })->count();
 
-        // 早退のカウント（例: 17:00以前の退勤を早退とする）
+        // 早退のカウント（例: 18:00以前の退勤を早退とする）
         $earlyLeaveCount = $currentMonthRecords->filter(function($record) {
-            return Carbon::parse($record->punch_out_time)->format('H:i:s') < '18:00';
+            return Carbon::parse($record->punch_out_time)->format('H:i:s') < '18:00:00';
         })->count();
 
         //長時間労働のカウント（例: 10時間以上の勤務を長時間労働とする）

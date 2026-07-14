@@ -104,9 +104,9 @@
                     <tr class="attendance-detail-row">
                         <th class="attendance-detail-th">休憩{{ $attendanceRecord->rest_records->count() + 1 }}（追加分）</th>
                         <td class="attendance-detail-td flex-td">
-                            <input type="text" name="rest_records[new][rest_in_time]" class="rest-time-input" value="" placeholder="00:00">
+                            <input type="text" name="rest_records[new][rest_in_time]" class="rest-time-input" value="">
                             <span class="time-separator">〜</span>
-                            <input type="text" name="rest_records[new][rest_out_time]" class="rest-time-input" value="" placeholder="00:00">
+                            <input type="text" name="rest_records[new][rest_out_time]" class="rest-time-input" value="">
                             @error('rest_time')
                                 <div class="error-message">{{ $message }}</div>
                             @enderror

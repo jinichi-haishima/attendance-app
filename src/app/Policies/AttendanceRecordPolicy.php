@@ -60,12 +60,14 @@ class AttendanceRecordPolicy
 
     public function update(User $user, AttendanceRecord $attendanceRecord)
     {
-        return $user->id === $attendanceRecord->user_id; 
+        return $user->id === $attendanceRecord->user_id
+            ? Response::allow()
+            : Response::deny('この勤怠データを編集する権限がありません。');
     }
 
     public function delete(User $user, AttendanceRecord $attendanceRecord)
     {
-        return $user->id === $attendanceRecord->user_id; 
+        return $user->id === $attendanceRecord->user_id;
     }
 
     /**

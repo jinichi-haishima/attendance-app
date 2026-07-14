@@ -63,4 +63,9 @@ class User extends Authenticatable implements MustVerifyEmail
             ->whereNotNull('punch_out_time')
             ->exists();
     }
+
+    public function scopeOnlyGeneral($query)
+    {
+        return $query->where('is_admin', false);
+    }
 }
